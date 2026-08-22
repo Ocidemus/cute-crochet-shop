@@ -1,0 +1,20 @@
+# Local Environment secrets
+crochet-backend-go/.env
+crochet-backend-go/.env.local
+crochet-backend-go/.env.*.local
+
+# Compiled binaries and temporary builds
+crochet-backend-go/bin/
+crochet-backend-go/tmp/
+crochet-backend-go/crochet-check
+crochet-backend-go/check_products
+crochet-backend-go/view_orders
+crochet-backend-go/scratch/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
