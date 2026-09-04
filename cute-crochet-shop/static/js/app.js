@@ -326,13 +326,13 @@ const app = {
                 optionsHtml = `
                     <div class="product-options-container">
                         <div class="option-row">
-                            <label for="pack-${prod.id}" class="option-label"><svg class="icon-inline" style="width: 14px; height: 14px; margin-right: 4px; stroke: var(--primary-dark);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Pack Size:</label>
+                            <label for="pack-${prod.id}" class="option-label"><svg class="icon-inline" style="width: 16px; height: 16px; margin-right: 6px; stroke: #B25866;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Pack Size:</label>
                             <select id="pack-${prod.id}" class="option-select-cute" onchange="app.updateCardPrice('${prod.id}')">
                                 ${packOpts}
                             </select>
                         </div>
                         <div class="option-row">
-                            <label for="color-${prod.id}" class="option-label"><svg class="icon-inline" style="width: 14px; height: 14px; margin-right: 4px; stroke: var(--primary-dark);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.67-.75 1.67-1.67 0-.42-.16-.8-.44-1.09-.28-.29-.44-.67-.44-1.09 0-.92.75-1.67 1.67-1.67H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z"/></svg> Color Option:</label>
+                            <label for="color-${prod.id}" class="option-label"><svg class="icon-inline" style="width: 16px; height: 16px; margin-right: 6px; stroke: #B25866; fill: none;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r=".5" fill="#B25866"/><circle cx="17.5" cy="10.5" r=".5" fill="#B25866"/><circle cx="8.5" cy="7.5" r=".5" fill="#B25866"/><circle cx="6.5" cy="12.5" r=".5" fill="#B25866"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.67-.75 1.67-1.67 0-.42-.16-.8-.44-1.09-.28-.29-.44-.67-.44-1.09 0-.92.75-1.67 1.67-1.67H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z"/></svg> Color:</label>
                             <select id="color-${prod.id}" class="option-select-cute">
                                 ${colorOpts}
                             </select>
