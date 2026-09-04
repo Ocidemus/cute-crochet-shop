@@ -114,7 +114,7 @@ const checkout = {
         };
 
         this.cart.forEach(item => {
-            const product = productsCatalog[item.product_id];
+            const product = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
             if (!product) return;
 
             const lineTotal = product.price * item.quantity;

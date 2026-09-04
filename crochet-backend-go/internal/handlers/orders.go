@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"crochet-backend-go/internal/db"
+	"crochet-backend-go/internal/email"
 	"crochet-backend-go/internal/razorpay"
 
 	"github.com/gin-gonic/gin"
@@ -132,8 +133,18 @@ func (h *OrdersHandler) CreateOrder(c *gin.Context) {
 
 	// 2. Fetch variants and enforce database pricing by joining product slugs
 	for _, item := range req.Items {
-		// Look up product variant using product slug (e.g. "panda", "brown-bear")
+		// Look up product variant using product slug (e.g. "panda", "bears-pair-pink")
 		variant, err := qtx.GetVariantByProductSlugForUpdate(ctx, item.ProductID)
+		if err != nil {
+			// Robust fallback lookup if exact variant slug is not in DB
+			fallbackSlug := item.ProductID
+			if strings.HasPrefix(item.ProductID, "bears-") {
+				fallbackSlug = "bears"
+			} else if strings.HasPrefix(item.ProductID, "teddy-") {
+				fallbackSlug = "teddy"
+			}
+			variant, err = qtx.GetVariantByProductSlugForUpdate(ctx, fallbackSlug)
+		}
 		if err != nil {
 			log.Printf("[Checkout Error] Variant slug lookup failed for '%s': %v", item.ProductID, err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Product SKU not found: %s", item.ProductID)})
@@ -457,6 +468,34 @@ func (h *OrdersHandler) VerifyPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit verification transaction."})
 		return
 	}
+
+	// Trigger automated confirmation email dispatch asynchronously
+	go func() {
+		user, uErr := h.Queries.GetUserByID(context.Background(), order.UserID)
+		if uErr == nil {
+			emailSvc := email.NewEmailService()
+			totalAmt, _ := order.TotalAmount.Float64Value()
+
+			var emailItems []email.OrderItemSummary
+			for _, item := range items {
+				itemPrice, _ := item.PriceAtPurchase.Float64Value()
+				emailItems = append(emailItems, email.OrderItemSummary{
+					ProductName: item.ProductName,
+					Quantity:    item.Quantity,
+					Price:       itemPrice.Float64,
+				})
+			}
+
+			addrStr := "Standard Shipping"
+			if order.AddressID.Valid {
+				if address, aErr := h.Queries.GetAddressByID(context.Background(), order.AddressID); aErr == nil {
+					addrStr = fmt.Sprintf("%s, %s, %s - %s", address.Line1, address.City, address.State, address.Pincode)
+				}
+			}
+
+			emailSvc.SendOrderConfirmation(user.Email, user.Name, order.RazorpayOrderID, totalAmt.Float64, emailItems, addrStr)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Order verified and payment recorded successfully."})
 }

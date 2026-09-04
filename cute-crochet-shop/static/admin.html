@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - CuteCrochet Shop</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <!-- CSS styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #FFFDFC;
+            border: 2px solid var(--primary-light);
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 141, 161, 0.05);
+        }
+
+        .metric-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-top: 5px;
+        }
+
+        .metric-lbl {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 1px solid var(--primary-light);
+            background: #FFF;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .admin-order-card {
+            background: #FFFDFC;
+            border: 2px solid var(--primary-light);
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .admin-order-header {
+            background: var(--bg-main);
+            padding: 16px 20px;
+            border-bottom: 1px dashed var(--primary-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-order-body {
+            padding: 20px;
+        }
+
+        .admin-order-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-order-grid { grid-template-columns: 1fr; }
+        }
+
+        .ship-badge {
+            background: #EBFDF8;
+            color: #1E6652;
+            border: 1px solid #C4F7E6;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Passkey Modal */
+        .passkey-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .passkey-box {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary-light);
+        }
+
+        .passkey-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--primary-light);
+            border-radius: 10px;
+            font-size: 16px;
+            margin: 15px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo" id="header-logo">
+                <svg class="icon-inline" style="animation: spin-slow 10s linear infinite; margin-right: 4px; font-size: 26px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0-9 9M21 12a9 9 0 0 0-9 9M12 3a9 9 0 0 1 9 9M3 12a9 9 0 0 1 9 9M9 6c0 3.3 2.7 6 6 6M15 18c0-3.3-2.7-6-6-6"/></svg> CuteCrochet Admin
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Storefront <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a></li>
+                    <li><button class="logout-btn" onclick="adminPortal.logoutAdmin()" style="padding: 6px 14px; font-size: 13px;">Lock Portal</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Passkey Login Overlay -->
+    <div id="admin-auth-modal" class="passkey-overlay" style="display: flex;">
+        <div class="passkey-box">
+            <div style="font-size: 36px; display: inline-block; margin-bottom: 5px;">
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:42px; height:42px; color:var(--primary-dark);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 style="color: var(--primary-dark); margin-top: 10px;">Admin Key Authentication</h3>
+            <p style="color: var(--text-muted); font-size: 13px;">Enter your server <code>ADMIN_API_KEY</code> passphrase to manage store orders and Shiprocket courier tracking.</p>
+            <input type="password" id="admin-passkey-input" class="passkey-input" placeholder="Paste ADMIN_API_KEY..." />
+            <button class="btn-cute" style="width: 100%; justify-content: center;" onclick="adminPortal.verifyPasskey()">
+                Unlock Dashboard 
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px; margin-left:4px;"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <div id="auth-error-msg" style="color: red; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </div>
+    </div>
+
+    <main class="admin-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="section-title" style="margin-bottom: 0;">Store Admin Dashboard</h2>
+            <button class="btn-cute" style="font-size: 13px; padding: 6px 14px;" onclick="adminPortal.fetchOrders()">
+                Refresh Orders 
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px; margin-left:4px;"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            </button>
+        </div>
+
+        <!-- Metrics Overview -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-lbl">Total Revenue</div>
+                <div class="metric-val" id="metric-revenue">₹0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-lbl">Total Orders</div>
+                <div class="metric-val" id="metric-total-orders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-lbl">Paid Orders</div>
+                <div class="metric-val" id="metric-paid-orders" style="color: #1E6652;">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-lbl">Pending Shipments</div>
+                <div class="metric-val" id="metric-pending-ship" style="color: #D84A67;">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="adminPortal.setFilter('ALL', this)">All Orders</button>
+            <button class="filter-btn" onclick="adminPortal.setFilter('PAID', this)">Paid Only</button>
+            <button class="filter-btn" onclick="adminPortal.setFilter('PENDING', this)">Pending Payment</button>
+            <button class="filter-btn" onclick="adminPortal.setFilter('SHIPPED', this)">Shipped</button>
+        </div>
+
+        <!-- Loader -->
+        <div id="admin-loader" style="text-align: center; padding: 40px; display: none;">
+            <div style="display: inline-block; animation: spin 2s linear infinite; color: var(--primary);">
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:36px; height:36px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+            </div>
+            <p style="color: var(--text-muted); margin-top: 10px;">Loading customer orders...</p>
+        </div>
+
+        <!-- Orders List Container -->
+        <div id="admin-orders-list"></div>
+    </main>
+
+    <!-- Attach Shipment Modal -->
+    <div id="shipment-modal" class="passkey-overlay" style="display: none;">
+        <div class="passkey-box" style="max-width: 450px;">
+            <div style="display: inline-block; color: var(--primary-dark); margin-bottom: 5px;">
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:40px; height:40px;"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <h3 style="color: var(--primary-dark); margin-top: 5px;">Attach Courier & Tracking</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Book shipment on Shiprocket dashboard and paste tracking details below.</p>
+            
+            <input type="hidden" id="ship-order-id" />
+            
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">COURIER NAME (e.g. Shiprocket / Delhivery)</label>
+                <input type="text" id="ship-courier-input" class="passkey-input" style="text-align: left; margin: 5px 0 15px 0;" value="Shiprocket / Delhivery" />
+            </div>
+
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">TRACKING NUMBER / AWB #</label>
+                <input type="text" id="ship-tracking-input" class="passkey-input" style="text-align: left; margin: 5px 0;" placeholder="e.g. SR9988776655" />
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cute" style="flex: 1; justify-content: center;" onclick="adminPortal.submitShipment()">
+                    Save & Mark Shipped
+                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px; margin-left:4px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                </button>
+                <button class="btn-cute" style="background: #F0F0F0; color: #666; border-color: #DDD;" onclick="document.getElementById('shipment-modal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="/js/auth.js?v=2.2"></script>
+    <script src="/js/app.js?v=2.2"></script>
+    <script src="/js/admin.js?v=1.0"></script>
+</body>
+</html>

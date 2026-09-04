@@ -47,13 +47,14 @@ const ordersPage = {
         // Expose PRODUCTS catalog
         const productsCatalog = (window.app && window.app.PRODUCTS) || {
             'panda': { id: 'panda', name: 'Panda Crochet Keychain', price: 799.00, images: ['assets/panda_keychain_1.jpg'] },
-            'brown-bear': { id: 'brown-bear', name: 'Teddy Bear Plushie (Brown)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'white-bear': { id: 'white-bear', name: 'Teddy Bear Plushie (White)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'pink-bear': { id: 'pink-bear', name: 'Teddy Bear Plushie (Pink)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'beige-bear': { id: 'beige-bear', name: 'Teddy Bear Plushie (Beige)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'penguin': { id: 'penguin', name: 'Mini Penguin Keychain', price: 599.00, images: ['assets/bears_group.jpg'] },
-            'tulips': { id: 'tulips', name: 'Double Tulip Keychains', price: 499.00, images: ['assets/bears_group.jpg'] },
-            'heart': { id: 'heart', name: 'Crochet Heart Keychain', price: 299.00, images: ['assets/bears_group.jpg'] }
+            'brown-bear': { id: 'brown-bear', name: 'Teddy Bear Plushie (Brown)', price: 1299.00, images: ['assets/brown_bear.jpg'] },
+            'white-bear': { id: 'white-bear', name: 'Teddy Bear Plushie (White)', price: 1299.00, images: ['assets/white_bear.jpg'] },
+            'pink-bear': { id: 'pink-bear', name: 'Teddy Bear Plushie (Pink)', price: 1299.00, images: ['assets/bears_trio.jpg'] },
+            'beige-bear': { id: 'beige-bear', name: 'Teddy Bear Plushie (Beige)', price: 1299.00, images: ['assets/beige_bear.jpg'] },
+            'duck': { id: 'duck', name: 'Little Duck holding Flower', price: 699.00, images: ['assets/duck_flower.jpg'] },
+            'capybara': { id: 'capybara', name: 'Capybara Plushie Keychain', price: 899.00, images: ['assets/capybara.jpg'] },
+            'tulips': { id: 'tulips', name: 'Double Tulip Keychains', price: 499.00, images: ['assets/tulip_keychain.jpg'] },
+            'heart': { id: 'heart', name: 'Crochet Heart Keychain', price: 299.00, images: ['assets/heart_box.jpg'] }
         };
 
         let html = '';
@@ -104,16 +105,10 @@ const ordersPage = {
             items.forEach(item => {
                 const prodId = item.product_id || item.variant_sku || item.ProductID || "";
                 
-                // Extract slug from product ID
-                let slug = prodId;
-                if (prodId.includes('-')) {
-                    slug = prodId.split('-')[0].toLowerCase();
-                }
-
-                const product = productsCatalog[slug] || {
+                const product = (window.app && window.app.getProduct) ? window.app.getProduct(prodId) : (productsCatalog[prodId] || {
                     name: item.product_name || item.ProductName || "Crochet Friend",
-                    images: ['assets/bears_group.jpg']
-                };
+                    images: ['assets/bears_colors.jpg']
+                });
 
                 let itemPrice = 0.0;
                 const rawPrice = item.price_at_purchase || item.PriceAtPurchase;

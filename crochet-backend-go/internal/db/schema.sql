@@ -1,7 +1,8 @@
--- schema.sql
-
 -- Enable UUID extension if not enabled (Supabase has this by default)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Drop existing tables for fresh initialization
+DROP TABLE IF EXISTS shipments, payments, order_items, orders, product_variants, products, addresses, users CASCADE;
 
 -- Users Table
 CREATE TABLE users (

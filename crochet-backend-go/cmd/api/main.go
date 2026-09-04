@@ -38,9 +38,6 @@ func main() {
 	}
 
 	// 1. Initialize PostgreSQL Connection Pool using pgx
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
 		log.Fatalf("Unable to parse DATABASE_URL: %v", err)
@@ -49,14 +46,17 @@ func main() {
 	// Disable prepared statement caching globally to prevent PgBouncer transaction pooler collisions (SQLSTATE 42P05)
 	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
-	dbPool, err := pgxpool.NewWithConfig(ctx, config)
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		log.Fatalf("Unable to create database pool: %v", err)
 	}
 	defer dbPool.Close()
 
-	// Test connection
-	if err := dbPool.Ping(ctx); err != nil {
+	// Test connection with a generous timeout (e.g. 30 seconds)
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pingCancel()
+
+	if err := dbPool.Ping(pingCtx); err != nil {
 		log.Fatalf("Database connection ping failed: %v", err)
 	}
 	log.Println("Connected to Supabase PostgreSQL Database successfully.")
@@ -158,6 +158,7 @@ func main() {
 		admin := api.Group("/admin")
 		admin.Use(handlers.AdminAuth())
 		{
+			admin.GET("/orders", adminHandler.ListAllOrders)
 			admin.POST("/shipments", adminHandler.AttachShipment)
 		}
 	}
@@ -180,6 +181,7 @@ func main() {
 	r.StaticFile("/contact.html", filepath.Join(staticDir, "contact.html"))
 	r.StaticFile("/login.html", filepath.Join(staticDir, "login.html"))
 	r.StaticFile("/orders.html", filepath.Join(staticDir, "orders.html"))
+	r.StaticFile("/admin.html", filepath.Join(staticDir, "admin.html"))
 
 	// Start Gin Server
 	log.Printf("Go Crochet Backend running on port %s...", port)
