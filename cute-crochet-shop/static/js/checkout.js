@@ -5,8 +5,6 @@ const checkout = {
     subtotal: 0,
     shipping: 99.00,
     total: 0,
-    activePaymentMethod: 'card',
-    qrPaymentConfirmed: false,
 
     async init() {
         if (!window.auth || !window.auth.isAuthenticated()) {
@@ -23,7 +21,7 @@ const checkout = {
         let saved = localStorage.getItem('saved_shipping_address');
         let data = saved ? JSON.parse(saved) : null;
 
-        const token = app.getToken();
+        const token = window.auth ? window.auth.getToken() : null;
         if (token) {
             try {
                 const resp = await fetch('/api/user/profile', {
@@ -32,7 +30,7 @@ const checkout = {
                 const pData = await resp.json();
                 if (pData.success && pData.user) {
                     if (!data) data = {};
-                    data.name = pData.user.name || data.name;
+                    data.name = pData.user.name || pData.user.username || data.name;
                     data.phone = pData.user.phone || data.phone;
                     data.email = pData.user.email || data.email;
                     if (pData.address) {
@@ -46,6 +44,11 @@ const checkout = {
             } catch (e) {}
         }
 
+        if (!data && window.auth.getUser()) {
+            const u = window.auth.getUser();
+            data = { name: u.name || u.username, email: u.email, phone: u.phone || '' };
+        }
+
         if (data) {
             if (data.name && document.getElementById('fullname')) document.getElementById('fullname').value = data.name;
             if (data.email && document.getElementById('email')) document.getElementById('email').value = data.email;
@@ -57,63 +60,7 @@ const checkout = {
         }
     },
 
-    switchPaymentMethod(method) {
-        this.activePaymentMethod = method;
-        const tabCard = document.getElementById('pay-tab-card');
-        const tabUpi = document.getElementById('pay-tab-upi');
-        const panelCard = document.getElementById('pay-panel-card');
-        const panelUpi = document.getElementById('pay-panel-upi');
-        const submitBtn = document.getElementById('checkout-submit-btn');
-
-        if (!tabCard || !tabUpi || !panelCard || !panelUpi || !submitBtn) return;
-
-        if (method === 'card') {
-            tabCard.classList.add('active');
-            tabUpi.classList.remove('active');
-            panelCard.classList.add('active');
-            panelUpi.classList.remove('active');
-            submitBtn.innerHTML = `Pay Securely ₹${this.total.toFixed(2)} <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-        } else {
-            tabUpi.classList.add('active');
-            tabCard.classList.remove('active');
-            panelUpi.classList.add('active');
-            panelCard.classList.remove('active');
-            submitBtn.innerHTML = `Proceed to UPI Pay ₹${this.total.toFixed(2)} <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>`;
-        }
-    },
-
-    showUPILightbox() {
-        const modal = document.getElementById('upi-qr-modal');
-        const totalText = document.getElementById('upi-qr-total');
-        if (modal && totalText) {
-            totalText.textContent = `Total: ₹${this.total.toFixed(2)}`;
-            modal.classList.add('active');
-        }
-    },
-
-    closeUPILightbox() {
-        const modal = document.getElementById('upi-qr-modal');
-        if (modal) modal.classList.remove('active');
-    },
-
-    confirmUPIPayment() {
-        this.qrPaymentConfirmed = true;
-        this.closeUPILightbox();
-        // Set placeholder UPI ID to skip verification and submit form
-        const upiIdField = document.getElementById('upi-id');
-        if (upiIdField) {
-            upiIdField.value = "scanned_qr@upi";
-        }
-        
-        // Find form and submit it
-        const form = document.getElementById('checkout-form');
-        if (form) {
-            form.dispatchEvent(new Event('submit', { cancelable: true }));
-        }
-    },
-
     async loadCheckoutItems() {
-        // Load cart directly from localStorage (lightweight client model)
         const localCartStr = localStorage.getItem('crochet_local_cart');
         try {
             this.cart = localCartStr ? JSON.parse(localCartStr) : [];
@@ -139,29 +86,25 @@ const checkout = {
         let itemsHtml = '';
         this.subtotal = 0;
 
-        // Exposing PRODUCTS from window.app.PRODUCTS resolves the undefined loading bug!
-        const productsCatalog = (window.app && window.app.PRODUCTS) || window.PRODUCTS || {
-            'panda': { id: 'panda', name: 'Panda Crochet Keychain', price: 799.00, images: ['assets/panda_keychain_1.jpg'] },
-            'brown-bear': { id: 'brown-bear', name: 'Teddy Bear Plushie (Brown)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'white-bear': { id: 'white-bear', name: 'Teddy Bear Plushie (White)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'pink-bear': { id: 'pink-bear', name: 'Teddy Bear Plushie (Pink)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'beige-bear': { id: 'beige-bear', name: 'Teddy Bear Plushie (Beige)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-            'penguin': { id: 'penguin', name: 'Mini Penguin Keychain', price: 599.00, images: ['assets/bears_group.jpg'] },
-            'tulips': { id: 'tulips', name: 'Double Tulip Keychains', price: 499.00, images: ['assets/bears_group.jpg'] },
-            'heart': { id: 'heart', name: 'Crochet Heart Keychain', price: 299.00, images: ['assets/bears_group.jpg'] }
-        };
+        const productsCatalog = (window.app && window.app.PRODUCTS) || window.PRODUCTS || {};
 
         this.cart.forEach(item => {
-            const product = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
-            if (!product) return;
-
-            const lineTotal = product.price * item.quantity;
+            const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
+            const price = prod ? prod.price : (item.price || 499.00);
+            const lineTotal = price * item.quantity;
             this.subtotal += lineTotal;
+            const thumbImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : 'assets/bears_colors.jpg';
 
             itemsHtml += `
-                <div class="cart-summary-line" style="font-size: 14px;">
-                    <span>${product.name} (x${item.quantity})</span>
-                    <span>₹${lineTotal.toFixed(2)}</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--primary-light);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${thumbImg}" alt="${prod.name}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;">
+                        <div>
+                            <span style="font-weight: 600; color: var(--primary-dark);">${prod.name}</span>
+                            <br><span style="font-size: 11px; color: var(--text-muted);">Qty: ${item.quantity} × ₹${price.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <span style="font-weight: 700; color: var(--primary);">₹${lineTotal.toFixed(2)}</span>
                 </div>
             `;
         });
@@ -169,17 +112,17 @@ const checkout = {
         this.total = this.subtotal + this.shipping;
 
         orderSummaryDiv.innerHTML = `
-            <h3>Your Order</h3>
-            <div style="margin-top: 15px; display:flex; flex-direction:column; gap:8px;">
+            <h3>Your Order Basket</h3>
+            <div style="margin-top: 15px; display:flex; flex-direction:column; gap:6px;">
                 ${itemsHtml}
             </div>
             <div class="cart-summary-line" style="margin-top: 15px; border-top: 2px dashed var(--primary-light); padding-top: 10px;">
                 <span>Subtotal:</span>
-                <span>₹${this.subtotal.toFixed(2)}</span>
+                <span style="font-weight:600;">₹${this.subtotal.toFixed(2)}</span>
             </div>
             <div class="cart-summary-line">
                 <span>Shipping:</span>
-                <span>₹${this.shipping.toFixed(2)}</span>
+                <span style="font-weight:600;">₹${this.shipping.toFixed(2)}</span>
             </div>
             <div class="cart-summary-total">
                 <span>Total:</span>
@@ -187,115 +130,10 @@ const checkout = {
             </div>
         `;
 
-        // Update the submit button value text with the calculated total
         const submitBtn = document.getElementById('checkout-submit-btn');
         if (submitBtn) {
-            this.switchPaymentMethod(this.activePaymentMethod);
+            submitBtn.innerHTML = `Pay & Place Order ₹${this.total.toFixed(2)} <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
         }
-    },
-
-    setupCardInputs() {
-        const cardNumInput = document.getElementById('card-number');
-        const cardExpiryInput = document.getElementById('card-expiry');
-        const cardCvvInput = document.getElementById('card-cvv');
-        const brandIcon = document.getElementById('card-brand-icon');
-
-        if (!cardNumInput || !cardExpiryInput || !cardCvvInput) return;
-
-        // Auto-focus styling replication
-        [cardNumInput, cardExpiryInput, cardCvvInput].forEach(input => {
-            if (!input) return;
-            const parent = input.closest('.stripe-mock-field');
-            input.addEventListener('focus', () => parent.classList.add('focus'));
-            input.addEventListener('blur', () => parent.classList.remove('focus'));
-        });
-
-        // Card number format & brand detector
-        cardNumInput.addEventListener('input', (e) => {
-            let val = e.target.value.replace(/\D/g, '');
-            val = val.substring(0, 16);
-            
-            let formatted = '';
-            for (let i = 0; i < val.length; i++) {
-                if (i > 0 && i % 4 === 0) formatted += ' ';
-                formatted += val[i];
-            }
-            e.target.value = formatted;
-
-            // Brand detection
-            if (val.startsWith('4')) {
-                brandIcon.innerHTML = `<span style="font-size: 11px; font-weight: 700; color: #1A1F71; font-family: var(--font-heading);">VISA</span>`;
-            } else if (/^(51|52|53|54|55)/.test(val)) {
-                brandIcon.innerHTML = `<span style="font-size: 11px; font-weight: 700; color: #EB001B; font-family: var(--font-heading);">MC</span>`;
-            } else if (/^(34|37)/.test(val)) {
-                brandIcon.innerHTML = `<span style="font-size: 11px; font-weight: 700; color: #007BC1; font-family: var(--font-heading);">AMEX</span>`;
-            } else {
-                brandIcon.innerHTML = `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`;
-                brandIcon.style.color = 'var(--primary)';
-            }
-        });
-
-        // Card expiry format MM/YY
-        cardExpiryInput.addEventListener('input', (e) => {
-            let val = e.target.value.replace(/\D/g, '');
-            val = val.substring(0, 4);
-            
-            let formatted = '';
-            if (val.length > 2) {
-                formatted = val.substring(0, 2) + '/' + val.substring(2);
-            } else {
-                formatted = val;
-            }
-            e.target.value = formatted;
-        });
-
-        // CVV limit to 3 or 4 digits
-        cardCvvInput.addEventListener('input', (e) => {
-            let val = e.target.value.replace(/\D/g, '');
-            val = val.substring(0, 4);
-            e.target.value = val;
-        });
-    },
-
-    validateCard(num, expiry, cvv) {
-        const cleanedNum = num.replace(/\s/g, '');
-        if (cleanedNum.length < 13 || cleanedNum.length > 16) return "Card number must be between 13 and 16 digits.";
-        
-        let sum = 0;
-        let shouldDouble = false;
-        for (let i = cleanedNum.length - 1; i >= 0; i--) {
-            let digit = parseInt(cleanedNum.charAt(i));
-            if (shouldDouble) {
-                if ((digit *= 2) > 9) digit -= 9;
-            }
-            sum += digit;
-            shouldDouble = !shouldDouble;
-        }
-        if (sum % 10 !== 0) return "Card number is invalid (Luhn check failed).";
-
-        const parts = expiry.split('/');
-        if (parts.length !== 2) return "Expiry date must be in MM/YY format.";
-        
-        const month = parseInt(parts[0], 10);
-        const year = parseInt('20' + parts[1], 10);
-        
-        if (isNaN(month) || month < 1 || month > 12) return "Expiry month is invalid.";
-        
-        const expiryDate = new Date(year, month - 1, 28);
-        if (expiryDate < new Date()) return "Card expiry date must be in the future.";
-
-        if (cvv.length < 3 || cvv.length > 4) return "CVV must be 3 or 4 digits.";
-
-        return null;
-    },
-
-    validateUPI(upiId) {
-        // Standard VPA check: username@bank
-        const upiPattern = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
-        if (!upiPattern.test(upiId)) {
-            return "UPI ID format is invalid. Must be like username@upi or name@bank.";
-        }
-        return null;
     },
 
     setupFormSubmit() {
@@ -310,40 +148,38 @@ const checkout = {
             e.preventDefault();
 
             const errorEl = document.getElementById('checkout-error');
-            errorEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'none';
 
-            const shipping = form.address.value + ', ' + form.city.value + ', ' + form.zipcode.value;
+            const fullname = form.fullname.value.trim();
+            const addressVal = form.address.value.trim();
+            const cityVal = form.city.value.trim();
+            const zipcodeVal = form.zipcode.value.trim();
+
+            if (!fullname || !addressVal || !cityVal || !zipcodeVal) {
+                if (errorEl) {
+                    errorEl.textContent = "Please fill out all required shipping address fields.";
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            const shipping = `${addressVal}, ${cityVal}, ${zipcodeVal}`;
             let paymentToken = 'tok_razorpay_' + Math.random().toString(36).substring(2, 12);
 
             loader.querySelector('h3').innerHTML = 'Connecting Secure Payment Gateway...';
             loader.querySelector('p').innerHTML = 'Initializing SSL connection with Razorpay payment servers...';
-
-            // Show secure processing animation overlay
             loader.classList.add('active');
 
             try {
-                // Pre-process items mapping
-                const productsCatalog = (window.app && window.app.PRODUCTS) || window.PRODUCTS || {
-                    'panda': { id: 'panda', name: 'Panda Crochet Keychain', price: 799.00, images: ['assets/panda_keychain_1.jpg'] },
-                    'brown-bear': { id: 'brown-bear', name: 'Teddy Bear Plushie (Brown)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-                    'white-bear': { id: 'white-bear', name: 'Teddy Bear Plushie (White)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-                    'pink-bear': { id: 'pink-bear', name: 'Teddy Bear Plushie (Pink)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-                    'beige-bear': { id: 'beige-bear', name: 'Teddy Bear Plushie (Beige)', price: 1299.00, images: ['assets/bears_group.jpg'] },
-                    'penguin': { id: 'penguin', name: 'Mini Penguin Keychain', price: 599.00, images: ['assets/bears_group.jpg'] },
-                    'tulips': { id: 'tulips', name: 'Double Tulip Keychains', price: 499.00, images: ['assets/bears_group.jpg'] },
-                    'heart': { id: 'heart', name: 'Crochet Heart Keychain', price: 299.00, images: ['assets/bears_group.jpg'] }
-                };
-
                 const itemsPayload = this.cart.map(item => {
-                    const prod = productsCatalog[item.product_id];
+                    const prod = window.app.getProduct(item.product_id);
                     return {
                         product_id: item.product_id,
                         quantity: item.quantity,
-                        price: prod ? prod.price : 0
+                        price: prod ? prod.price : 499.00
                     };
                 });
 
-                // 1. Initiate order creation on backend
                 const response = await window.auth.fetchWithAuth('/api/checkout', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -358,144 +194,150 @@ const checkout = {
                 if (response.ok && data.success) {
                     loader.classList.remove('active');
 
-                    // 2. Open Razorpay Secure Payment Portal
-                    const options = {
-                        "key": data.keyId,
-                        "amount": data.amount,
-                        "currency": data.currency,
-                        "name": "CuteCrochet Shop",
-                        "description": "Adopt your handmade crochet friends",
-                        "order_id": data.razorpayOrderId,
-                        "prefill": {
-                            "name": window.auth.getUser() ? window.auth.getUser().name : "",
-                            "email": window.auth.getUser() ? window.auth.getUser().email : ""
-                        },
-                        "theme": {
-                            "color": "#FF8DA1"
-                        },
-                        "handler": async (paymentDetails) => {
-                            loader.querySelector('h3').innerHTML = 'Verifying Transaction...';
-                            loader.querySelector('p').innerHTML = 'Verifying cryptographic security keys...';
-                            loader.classList.add('active');
-
-                            try {
-                                // 3. Synchronously verify payment signatures on backend
-                                const verifyResponse = await window.auth.fetchWithAuth('/api/orders/verify', {
-                                    method: 'POST',
-                                    body: JSON.stringify({
-                                        razorpayPaymentId: paymentDetails.razorpay_payment_id,
-                                        razorpayOrderId: paymentDetails.razorpay_order_id,
-                                        razorpaySignature: paymentDetails.razorpay_signature
-                                    })
-                                });
-
-                                const verifyData = await verifyResponse.json();
-                                if (verifyResponse.ok && verifyData.success) {
-                                    loader.classList.remove('active');
-                                    checkoutCard.style.display = 'none';
-
-                                    let itemsReceiptHtml = '';
-                                    this.cart.forEach(item => {
-                                        const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
-                                        const prodName = prod ? prod.name : item.product_id;
-                                        const prodPrice = prod ? prod.price : 499.00;
-                                        itemsReceiptHtml += `<li><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg> ${prodName} (x${item.quantity}) - ₹${(prodPrice * item.quantity).toFixed(2)}</li>`;
-                                    });
-
-                                    const invoiceId = data.order_id ? 'INV-' + data.order_id.substring(0, 8).toUpperCase() : 'INV-RECEIPT';
-                                    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-                                    successDiv.innerHTML = `
-                                        <div class="order-success-screen cute-card printable-invoice">
-                                            <div class="success-checkmark-circle no-print"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" style="width: 40px; height: 40px; stroke: #1E6652; vertical-align: middle;"><path d="M20 6 9 17l-5-5"/></svg></div>
-                                            <h2>Payment Successful!</h2>
-                                            <p class="no-print">Thank you for buying handmade with love! Your confirmation email has been sent and your order is placed securely.</p>
-                                            
-                                            <div style="text-align: left; margin: 25px 0; background: var(--bg-main); padding: 24px; border-radius: var(--border-radius-md); border: 2px dashed var(--primary-light);" class="invoice-box">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color, #EAE0D5); padding-bottom: 15px;">
-                                                    <div>
-                                                        <h3 style="margin-bottom: 4px; font-size: 20px; color: var(--primary);">CuteCrochet Shop</h3>
-                                                        <p style="font-size: 12px; color: var(--text-muted); margin:0;">Handmade Crochet Artisan Goods</p>
-                                                        <p style="font-size: 12px; color: var(--text-muted); margin:0;">Tax Invoice & Official Order Receipt</p>
-                                                    </div>
-                                                    <div style="text-align: right;">
-                                                        <p style="font-size: 13px; margin: 0;"><strong>Date:</strong> ${currentDate}</p>
-                                                        <p style="font-size: 13px; margin: 2px 0;"><strong>Invoice:</strong> ${invoiceId}</p>
-                                                        <p style="font-size: 13px; margin: 0;"><strong>Status:</strong> <span style="color:#1E6652; font-weight:700;">PAID & VERIFIED</span></p>
-                                                    </div>
-                                                </div>
-
-                                                <p style="font-size:14px; margin-bottom:5px;"><strong>Order ID:</strong> #${data.order_id}</p>
-                                                <p style="font-size:14px; margin-bottom:5px;"><strong>Transaction ID:</strong> ${paymentDetails.razorpay_payment_id}</p>
-                                                <p style="font-size:14px; margin-bottom:15px;"><strong>Deliver to:</strong> ${shipping}</p>
-                                                <p style="font-size:14px; margin-bottom:15px;"><strong>Payment Method:</strong> RAZORPAY SECURE GATEWAY</p>
-
-                                                <h5 style="margin-bottom:8px; font-family:var(--font-heading); font-size:15px;">Items purchased:</h5>
-                                                <ul style="list-style:none; padding-left:0; font-size:13px; margin-bottom:15px;">
-                                                    ${itemsReceiptHtml}
-                                                </ul>
-                                                <div style="display: flex; justify-content: space-between; font-size: 14px; border-top: 1px dashed var(--primary-light); padding-top: 8px;">
-                                                    <span>Subtotal:</span>
-                                                    <span>₹${this.subtotal.toFixed(2)}</span>
-                                                </div>
-                                                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 4px;">
-                                                    <span>Flat Shipping:</span>
-                                                    <span>₹${this.shipping.toFixed(2)}</span>
-                                                </div>
-                                                <div style="display: flex; justify-content: space-between; font-size:16px; font-weight:700; border-top: 2px solid var(--primary); padding-top:10px; margin-top: 10px; color: var(--primary);">
-                                                    <span>Total Paid:</span>
-                                                    <span>₹${this.total.toFixed(2)}</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;" class="no-print">
-                                                <button onclick="window.print()" class="btn-cute" style="background: #FFF0F3; color: var(--primary); border: 2px solid var(--primary-light); cursor: pointer;">
-                                                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Download Invoice (PDF)
-                                                </button>
-                                                <a href="/index.html" class="btn-cute">Continue Shopping <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></a>
-                                            </div>
-                                        </div>
-                                    `;
-                                    successDiv.style.display = 'block';
-
-                                    // Reset cart states
-                                    window.app.cart = [];
-                                    localStorage.setItem('crochet_local_cart', '[]');
-                                    window.app.updateCartBadge();
-                                } else {
-                                    loader.classList.remove('active');
-                                    errorEl.textContent = verifyData.error || "Cryptographic verification failed. Payment was received but could not be logged yet. Please contact support.";
-                                    errorEl.style.display = 'block';
-                                }
-                            } catch (err) {
-                                loader.classList.remove('active');
-                                errorEl.textContent = "A verification network error occurred. Please contact support with your payment ID: " + paymentDetails.razorpay_payment_id;
-                                errorEl.style.display = 'block';
+                    if (window.Razorpay && data.keyId && data.keyId !== "rzp_test_placeholder" && data.keyId.trim() !== "") {
+                        const options = {
+                            "key": data.keyId,
+                            "amount": data.amount,
+                            "currency": data.currency || "INR",
+                            "name": "CuteCrochet Shop",
+                            "description": "Handmade crochet plushies",
+                            "order_id": data.razorpayOrderId,
+                            "prefill": {
+                                "name": fullname,
+                                "email": form.email.value || "",
+                                "contact": form.phone.value || ""
+                            },
+                            "theme": { "color": "#FF8DA1" },
+                            "handler": async (paymentDetails) => {
+                                await this.completePaymentVerification(data, paymentDetails, shipping);
                             }
-                        },
-                        "modal": {
-                            "ondismiss": function() {
-                                loader.classList.remove('active');
-                            }
-                        }
-                    };
-                    const rzp = new Razorpay(options);
-                    rzp.open();
+                        };
+                        const rzp = new window.Razorpay(options);
+                        rzp.open();
+                    } else {
+                        // Demo/Test fallback for unconfigured Razorpay key in environment
+                        await this.completePaymentVerification(data, {
+                            razorpay_payment_id: "pay_test_" + Math.random().toString(36).substring(2, 12),
+                            razorpay_order_id: data.razorpayOrderId || ("order_test_" + Math.random().toString(36).substring(2, 12)),
+                            razorpay_signature: "sig_test_" + Math.random().toString(36).substring(2, 12)
+                        }, shipping);
+                    }
                 } else {
                     loader.classList.remove('active');
-                    errorEl.textContent = data.error || "Failed to create payment session. Please try again.";
-                    errorEl.style.display = 'block';
+                    if (errorEl) {
+                        errorEl.textContent = data.error || "Failed to initiate payment order.";
+                        errorEl.style.display = 'block';
+                    }
                 }
             } catch (err) {
                 loader.classList.remove('active');
-                errorEl.textContent = "A network error occurred. Please check your connection.";
-                errorEl.style.display = 'block';
+                if (errorEl) {
+                    errorEl.textContent = err.message || "A network error occurred while processing your order.";
+                    errorEl.style.display = 'block';
+                }
             }
         });
+    },
+
+    async completePaymentVerification(orderData, paymentDetails, shippingAddress) {
+        const loader = document.getElementById('checkout-loading');
+        const checkoutCard = document.getElementById('checkout-card-layout');
+        const successDiv = document.getElementById('checkout-success-view');
+
+        loader.querySelector('h3').innerHTML = 'Verifying Payment & Placing Order...';
+        loader.querySelector('p').innerHTML = 'Dispatched confirmation email & generating tax invoice...';
+        loader.classList.add('active');
+
+        try {
+            const verifyResponse = await window.auth.fetchWithAuth('/api/orders/verify', {
+                method: 'POST',
+                body: JSON.stringify({
+                    razorpayPaymentId: paymentDetails.razorpay_payment_id,
+                    razorpayOrderId: paymentDetails.razorpay_order_id,
+                    razorpaySignature: paymentDetails.razorpay_signature
+                })
+            });
+
+            const verifyData = await verifyResponse.json();
+            if (verifyResponse.ok && verifyData.success) {
+                loader.classList.remove('active');
+                if (checkoutCard) checkoutCard.style.display = 'none';
+
+                // Clear cart after successful checkout
+                localStorage.removeItem('crochet_local_cart');
+                if (window.app) window.app.cart = [];
+
+                let itemsReceiptHtml = '';
+                this.cart.forEach(item => {
+                    const prod = window.app.getProduct(item.product_id);
+                    itemsReceiptHtml += `<li>🌸 ${prod.name} (x${item.quantity}) - ₹${(prod.price * item.quantity).toFixed(2)}</li>`;
+                });
+
+                const invoiceId = orderData.order_id ? 'INV-' + orderData.order_id.substring(0, 8).toUpperCase() : 'INV-RECEIPT';
+                const currentDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+
+                successDiv.innerHTML = `
+                    <div class="order-success-screen cute-card printable-invoice" style="text-align: center; padding: 30px;">
+                        <div class="success-checkmark-circle no-print" style="width: 60px; height: 60px; background: #EBFDF8; border: 2px solid #C4F7E6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                            <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="#1E6652" stroke-width="2.8" style="width: 32px; height: 32px;"><path d="M20 6 9 17l-5-5"/></svg>
+                        </div>
+                        <h2 style="color: var(--primary-dark); font-size: 24px; margin-bottom: 8px;">Order Placed Successfully!</h2>
+                        <p class="no-print" style="color: var(--text-muted); font-size: 14px;">Thank you for buying handmade with love! Your confirmation email has been sent and your order is confirmed.</p>
+                        
+                        <div style="text-align: left; margin: 25px 0; background: #FFFDF8; padding: 24px; border-radius: 12px; border: 2px dashed #FFD6E0;" class="invoice-box">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid #FFD6E0; padding-bottom: 15px;">
+                                <div>
+                                    <h3 style="margin: 0 0 4px 0; font-size: 20px; color: var(--primary);">CuteCrochet Shop</h3>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin:0;">Handmade Crochet Artisan Goods</p>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin:0;">Agra, Uttar Pradesh, India</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p style="font-size: 13px; margin: 0;"><strong>Date:</strong> ${currentDate}</p>
+                                    <p style="font-size: 13px; margin: 2px 0;"><strong>Invoice:</strong> ${invoiceId}</p>
+                                    <p style="font-size: 13px; margin: 0;"><strong>Status:</strong> <span style="color:#1E6652; font-weight:700;">PAID & VERIFIED</span></p>
+                                </div>
+                            </div>
+
+                            <p style="font-size:13px; margin-bottom:4px;"><strong>Order Reference:</strong> #${orderData.order_id || 'ORDER'}</p>
+                            <p style="font-size:13px; margin-bottom:4px;"><strong>Payment Transaction ID:</strong> ${paymentDetails.razorpay_payment_id}</p>
+                            <p style="font-size:13px; margin-bottom:15px;"><strong>Deliver to:</strong> ${shippingAddress}</p>
+
+                            <h5 style="margin-bottom:8px; font-size:14px; color: var(--primary-dark);">Items purchased:</h5>
+                            <ul style="list-style:none; padding-left:0; font-size:13px; margin-bottom:15px; line-height: 1.6;">
+                                ${itemsReceiptHtml}
+                            </ul>
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; border-top: 1px dashed #FFD6E0; padding-top: 8px;">
+                                <span>Subtotal:</span>
+                                <span>₹${this.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 4px;">
+                                <span>Flat Shipping:</span>
+                                <span>₹${this.shipping.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size:16px; font-weight:700; border-top: 2px solid var(--primary); padding-top:10px; margin-top: 10px; color: var(--primary);">
+                                <span>Total Paid:</span>
+                                <span>₹${this.total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;" class="no-print">
+                            <button type="button" class="btn-cute btn-secondary" onclick="window.print()" style="padding: 10px 20px;">
+                                Download / Print Invoice (PDF) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                            <a href="profile.html" class="btn-cute" style="padding: 10px 20px; text-decoration: none;">View My Account & Orders &rarr;</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                loader.classList.remove('active');
+                alert(verifyData.error || "Payment verification failed.");
+            }
+        } catch (err) {
+            loader.classList.remove('active');
+            alert("Network error verifying payment.");
+        }
     }
 };
-
-window.checkout = checkout;
 
 document.addEventListener('DOMContentLoaded', () => {
     checkout.init();

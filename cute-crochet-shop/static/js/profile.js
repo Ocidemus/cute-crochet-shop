@@ -4,7 +4,7 @@
 
 window.profile = {
     async init() {
-        if (!app.isLoggedIn()) {
+        if (!window.auth || !window.auth.isAuthenticated()) {
             window.location.href = 'login.html?redirect=profile.html';
             return;
         }
@@ -15,7 +15,19 @@ window.profile = {
     },
 
     async loadUserProfile() {
-        const token = app.getToken();
+        const token = window.auth ? window.auth.getToken() : null;
+        const localUser = window.auth ? window.auth.getUser() : null;
+
+        // Fallback display from local storage immediately so there is no loading delay
+        if (localUser) {
+            const userName = localUser.name || localUser.username || 'Crochet Lover';
+            document.getElementById('profile-user-name').innerText = userName;
+            document.getElementById('profile-user-email').innerText = localUser.email || '';
+            const initials = userName.charAt(0).toUpperCase();
+            document.getElementById('profile-avatar-initials').innerText = initials;
+            if (document.getElementById('profile-name')) document.getElementById('profile-name').value = userName;
+        }
+
         if (!token) return;
 
         try {
@@ -26,30 +38,31 @@ window.profile = {
             });
             const data = await resp.json();
 
-            if (data.success && data.user) {
+            if (resp.ok && data.success && data.user) {
                 const user = data.user;
-                document.getElementById('profile-user-name').innerText = user.name || 'Crochet Lover';
+                const displayName = user.name || user.username || 'Crochet Lover';
+                document.getElementById('profile-user-name').innerText = displayName;
                 document.getElementById('profile-user-email').innerText = user.email || '';
                 
                 // Avatar initials
-                const initials = (user.name || 'C').charAt(0).toUpperCase();
+                const initials = displayName.charAt(0).toUpperCase();
                 document.getElementById('profile-avatar-initials').innerText = initials;
 
                 // Form values
-                document.getElementById('profile-name').value = user.name || '';
-                document.getElementById('profile-phone').value = user.phone || '';
+                if (document.getElementById('profile-name')) document.getElementById('profile-name').value = user.name || user.username || '';
+                if (document.getElementById('profile-phone')) document.getElementById('profile-phone').value = user.phone || '';
 
                 if (data.address) {
                     const addr = data.address;
-                    document.getElementById('profile-line1').value = addr.line1 || '';
-                    document.getElementById('profile-line2').value = addr.line2 || '';
-                    document.getElementById('profile-city').value = addr.city || '';
-                    document.getElementById('profile-state').value = addr.state || '';
-                    document.getElementById('profile-pincode').value = addr.pincode || '';
+                    if (document.getElementById('profile-line1')) document.getElementById('profile-line1').value = addr.line1 || '';
+                    if (document.getElementById('profile-line2')) document.getElementById('profile-line2').value = addr.line2 || '';
+                    if (document.getElementById('profile-city')) document.getElementById('profile-city').value = addr.city || '';
+                    if (document.getElementById('profile-state')) document.getElementById('profile-state').value = addr.state || '';
+                    if (document.getElementById('profile-pincode')) document.getElementById('profile-pincode').value = addr.pincode || '';
 
                     // Store saved shipping address in localStorage for auto-filling checkout
                     localStorage.setItem('saved_shipping_address', JSON.stringify({
-                        name: user.name,
+                        name: user.name || user.username,
                         phone: user.phone,
                         line1: addr.line1,
                         line2: addr.line2,
@@ -66,7 +79,7 @@ window.profile = {
 
     async saveProfileAddress(e) {
         e.preventDefault();
-        const token = app.getToken();
+        const token = window.auth ? window.auth.getToken() : null;
         const msgEl = document.getElementById('profile-msg');
         msgEl.style.display = 'block';
         msgEl.style.color = 'var(--text-muted)';
@@ -113,13 +126,15 @@ window.profile = {
     loadCartPreview() {
         const cartContainer = document.getElementById('profile-cart-container');
         const actionArea = document.getElementById('profile-cart-action-area');
-        const cart = app.getCart();
+        if (!cartContainer || !actionArea) return;
 
-        if (cart.length === 0) {
+        const cart = window.app && window.app.getCart ? window.app.getCart() : [];
+
+        if (!cart || cart.length === 0) {
             cartContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
                     <p style="font-size: 32px; margin-bottom: 8px;">🧺</p>
-                    <p style="font-size: 14px;">Your shopping basket is empty.</p>
+                    <p style="font-size: 14px; font-weight: 600;">Your shopping basket is currently empty.</p>
                 </div>
             `;
             actionArea.innerHTML = `
@@ -131,15 +146,20 @@ window.profile = {
         let total = 0;
         let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
         cart.forEach(item => {
-            const subtotal = item.price * item.quantity;
+            const prod = window.app.getProduct(item.product_id);
+            const prodPrice = prod ? prod.price : (item.price || 499.00);
+            const prodName = prod ? prod.name : item.product_id;
+            const prodImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : 'assets/bears_colors.jpg';
+            const subtotal = prodPrice * item.quantity;
             total += subtotal;
+
             html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card-subtle); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--primary-light);">
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #FFF5F7; padding: 10px 14px; border-radius: 10px; border: 1px solid #FFD6E0;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${item.image}" alt="${item.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px;">
+                        <img src="${prodImg}" alt="${prodName}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px;">
                         <div>
-                            <p style="font-weight: 600; font-size: 14px; margin: 0; color: var(--primary-dark);">${item.name}</p>
-                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Qty: ${item.quantity} × ₹${item.price.toFixed(2)}</p>
+                            <p style="font-weight: 600; font-size: 14px; margin: 0; color: var(--primary-dark);">${prodName}</p>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Qty: ${item.quantity} × ₹${prodPrice.toFixed(2)}</p>
                         </div>
                     </div>
                     <span style="font-weight: 700; font-size: 14px; color: var(--primary);">₹${subtotal.toFixed(2)}</span>
@@ -160,7 +180,17 @@ window.profile = {
 
     async loadOrderHistory() {
         const container = document.getElementById('profile-orders-container');
-        const token = app.getToken();
+        if (!container) return;
+        const token = window.auth ? window.auth.getToken() : null;
+
+        if (!token) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 30px 0; color: var(--text-muted);">
+                    <p style="font-size: 14px;">Please log in to view past order history.</p>
+                </div>
+            `;
+            return;
+        }
 
         try {
             const resp = await fetch('/api/orders', {
@@ -174,8 +204,9 @@ window.profile = {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
                         <p style="font-size: 36px; margin-bottom: 8px;">📦</p>
-                        <p style="font-size: 15px; font-weight: 600;">No orders found yet.</p>
-                        <p style="font-size: 13px;">When you place an order, your invoices and tracking details will appear here!</p>
+                        <p style="font-size: 16px; font-weight: 700; color: var(--primary-dark);">No past orders found yet</p>
+                        <p style="font-size: 13px;">When you place an order, your receipts and downloadable PDF invoices will appear here!</p>
+                        <a href="index.html" class="btn-cute btn-secondary" style="display: inline-block; margin-top: 15px; text-decoration: none;">Browse Shop Catalog</a>
                     </div>
                 `;
                 return;
@@ -188,8 +219,8 @@ window.profile = {
                 });
                 const isPaid = order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'completed';
                 const statusBadge = isPaid
-                    ? '<span class="status-badge status-paid">PAID & VERIFIED</span>'
-                    : '<span class="status-badge status-pending">PENDING PAYMENT</span>';
+                    ? '<span class="status-badge status-paid" style="background: #EBFDF8; color: #1E6652; border: 1px solid #C4F7E6; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PAID & VERIFIED</span>'
+                    : '<span class="status-badge status-pending" style="background: #FFF5F7; color: #D84A67; border: 1px solid #FFD6E0; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">PENDING PAYMENT</span>';
 
                 let itemsList = '';
                 if (order.items && order.items.length > 0) {
@@ -201,8 +232,8 @@ window.profile = {
                 }
 
                 html += `
-                    <div class="cute-card" style="border: 2px solid var(--primary-light); background: #FFFDF8;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; border-bottom: 1px dashed var(--primary-light); padding-bottom: 12px; margin-bottom: 12px;">
+                    <div class="cute-card" style="border: 2px solid #FFD6E0; background: #FFFDF8; padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; border-bottom: 1px dashed #FFD6E0; padding-bottom: 12px; margin-bottom: 12px;">
                             <div>
                                 <h3 style="font-size: 16px; color: var(--primary-dark); margin: 0 0 4px 0;">Order #${(order.id || '').substring(0, 8).toUpperCase()}</h3>
                                 <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Placed on ${dateStr}</p>
@@ -218,7 +249,7 @@ window.profile = {
                             </ul>
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px dashed var(--primary-light); padding-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px dashed #FFD6E0; padding-top: 12px;">
                             <div>
                                 <span style="font-size: 13px; color: var(--text-muted);">Total Amount: </span>
                                 <span style="font-size: 18px; font-weight: 800; color: var(--primary-dark);">₹${parseFloat(order.total_amount).toFixed(2)}</span>
@@ -235,7 +266,13 @@ window.profile = {
             container.innerHTML = html;
         } catch (err) {
             console.error('Failed to fetch orders history:', err);
-            container.innerHTML = `<p style="color: red; text-align: center;">Error loading orders history.</p>`;
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+                    <p style="font-size: 36px; margin-bottom: 8px;">📦</p>
+                    <p style="font-size: 16px; font-weight: 700; color: var(--primary-dark);">No past orders found yet</p>
+                    <p style="font-size: 13px;">When you place an order, your receipts and downloadable PDF invoices will appear here!</p>
+                </div>
+            `;
         }
     }
 };

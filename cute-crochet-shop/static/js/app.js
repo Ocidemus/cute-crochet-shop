@@ -197,6 +197,18 @@ const app = {
     },
 
     // Cart Management
+    getCart() {
+        if (!this.cart || !Array.isArray(this.cart)) {
+            const localCartStr = localStorage.getItem('crochet_local_cart');
+            try {
+                this.cart = localCartStr ? JSON.parse(localCartStr) : [];
+            } catch (e) {
+                this.cart = [];
+            }
+        }
+        return this.cart || [];
+    },
+
     async loadCart() {
         const localCartStr = localStorage.getItem('crochet_local_cart');
         try {
@@ -236,6 +248,9 @@ const app = {
         
         if (window.location.pathname.endsWith('cart.html') || window.location.pathname.endsWith('cart')) {
             this.renderCartPage();
+        }
+        if (window.profile && typeof window.profile.loadCartPreview === 'function') {
+            window.profile.loadCartPreview();
         }
     },
 
@@ -294,11 +309,39 @@ const app = {
         if (qtyEl) {
             qtyEl.textContent = this.cardQuantities[prodId];
         }
+
+        // If item is already in cart, update cart item quantity directly to match stepper
+        let finalProductId = prodId;
+        const prodObj = PRODUCTS[prodId];
+        if (prodObj && prodObj.hasOptions) {
+            const packSelect = document.getElementById(`pack-${prodId}`);
+            const colorSelect = document.getElementById(`color-${prodId}`);
+            const packVal = packSelect ? packSelect.value : 'single';
+            const colorVal = colorSelect ? colorSelect.value : 'brown';
+            finalProductId = `${prodId}-${packVal}-${colorVal}`;
+        }
+
+        const existingIdx = this.cart.findIndex(i => i.product_id === finalProductId);
+        if (existingIdx > -1) {
+            this.saveCartItem(finalProductId, this.cardQuantities[prodId], true);
+        }
     },
 
     addToCartWithQty(productId) {
         const qty = this.cardQuantities[productId] || 1;
-        this.addToCart(productId, qty);
+        let finalProductId = productId;
+        const prodObj = PRODUCTS[productId];
+        if (prodObj && prodObj.hasOptions) {
+            const packSelect = document.getElementById(`pack-${productId}`);
+            const colorSelect = document.getElementById(`color-${productId}`);
+            const packVal = packSelect ? packSelect.value : 'single';
+            const colorVal = colorSelect ? colorSelect.value : 'brown';
+            finalProductId = `${productId}-${packVal}-${colorVal}`;
+        }
+
+        this.saveCartItem(finalProductId, qty, true);
+        const resolved = this.getProduct(finalProductId);
+        this.showToast(`Cart updated: ${qty}x ${resolved.name}!`);
     },
 
     showToast(message) {
