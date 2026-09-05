@@ -132,8 +132,10 @@ window.profile = {
 
         if (!cart || cart.length === 0) {
             cartContainer.innerHTML = `
-                <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
-                    <p style="font-size: 32px; margin-bottom: 8px;">🧺</p>
+                <div style="text-align: center; padding: 30px 0; color: var(--text-muted);">
+                    <div style="margin-bottom: 8px;">
+                        <svg class="icon-inline" style="width: 46px; height: 46px; color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5" class="icon-filled"/><circle cx="18" cy="20" r="1.5" class="icon-filled"/><path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/></svg>
+                    </div>
                     <p style="font-size: 14px; font-weight: 600;">Your shopping basket is currently empty.</p>
                 </div>
             `;

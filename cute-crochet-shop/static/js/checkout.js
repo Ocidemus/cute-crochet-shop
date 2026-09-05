@@ -157,35 +157,48 @@ const checkout = {
             const stateVal = form.state ? form.state.value.trim() : '';
             const zipcodeVal = form.zipcode.value.trim();
 
-            if (!fullname || !addressVal || !cityVal || !zipcodeVal) {
-                if (errorEl) {
-                    errorEl.textContent = "Please fill out all required contact & shipping address fields.";
-                    errorEl.style.display = 'block';
-                }
+            this.clearFieldHighlights();
+
+            if (!fullname) {
+                this.showErrorNotification("Please enter your Full Name.", ['fullname']);
+                return;
+            }
+
+            if (!phoneVal || phoneVal.replace(/[^0-9]/g, '').length < 10) {
+                this.showErrorNotification("Please enter a valid 10-digit Phone Number.", ['phone']);
+                return;
+            }
+
+            if (!addressVal) {
+                this.showErrorNotification("Please enter your Street Address.", ['address']);
+                return;
+            }
+
+            if (!cityVal) {
+                this.showErrorNotification("Please enter your City name.", ['city']);
+                return;
+            }
+
+            if (!stateVal) {
+                this.showErrorNotification("Please enter your State name.", ['state']);
+                return;
+            }
+
+            if (!zipcodeVal || !/^\d{6}$/.test(zipcodeVal)) {
+                this.showErrorNotification("Please enter a valid 6-digit Pincode / Zip code.", ['zipcode']);
                 return;
             }
 
             if (/\d/.test(fullname)) {
-                if (errorEl) {
-                    errorEl.textContent = "Full Name cannot contain numbers. Please enter text only.";
-                    errorEl.style.display = 'block';
-                }
+                this.showErrorNotification("Full Name cannot contain numbers. Please enter text only.", ['fullname']);
                 return;
             }
 
             if (/\d/.test(cityVal) || /\d/.test(stateVal)) {
-                if (errorEl) {
-                    errorEl.textContent = "City and State cannot contain numbers. Please enter text only.";
-                    errorEl.style.display = 'block';
-                }
-                return;
-            }
-
-            if (zipcodeVal && !/^\d{6}$/.test(zipcodeVal)) {
-                if (errorEl) {
-                    errorEl.textContent = "Zip code must be a valid 6-digit number.";
-                    errorEl.style.display = 'block';
-                }
+                const invalidFields = [];
+                if (/\d/.test(cityVal)) invalidFields.push('city');
+                if (/\d/.test(stateVal)) invalidFields.push('state');
+                this.showErrorNotification("City and State cannot contain numbers. Please enter text only.", invalidFields);
                 return;
             }
 
@@ -365,18 +378,79 @@ const checkout = {
         }
     },
 
+    showErrorNotification(message, fieldIds = []) {
+        const errorEl = document.getElementById('checkout-error');
+        if (errorEl) {
+            errorEl.innerHTML = `
+                <div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 14px 18px; margin-bottom: 15px; animation: pop 0.3s ease; display: flex; align-items: flex-start; gap: 12px;">
+                    <svg class="icon-inline" style="width: 22px; height: 22px; stroke: #D32F2F; flex-shrink: 0; margin-top: 2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div>
+                        <strong style="color: #D32F2F; font-size: 14px; display: block; margin-bottom: 3px;">Attention Required in Form Inputs:</strong>
+                        <span style="color: #5A3A40; font-size: 13px; font-weight: 500;">${message}</span>
+                    </div>
+                </div>
+            `;
+            errorEl.style.display = 'block';
+            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        if (Array.isArray(fieldIds)) {
+            fieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.border = '2px solid #FF8DA1';
+                    el.style.backgroundColor = '#FFF5F7';
+                    el.addEventListener('input', () => {
+                        el.style.border = '';
+                        el.style.backgroundColor = '';
+                    }, { once: true });
+                }
+            });
+        }
+    },
+
+    clearFieldHighlights() {
+        ['fullname', 'phone', 'email', 'address', 'city', 'state', 'zipcode'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.border = '';
+                el.style.backgroundColor = '';
+            }
+        });
+    },
+
+    copyUPIVPA() {
+        const vpaText = document.getElementById('upi-vpa-id') ? document.getElementById('upi-vpa-id').textContent.trim() : 'craftingforyouofficial@upi';
+        const copyBtn = document.getElementById('copy-vpa-btn');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(vpaText).then(() => {
+                if (copyBtn) {
+                    copyBtn.textContent = '✓ Copied!';
+                    copyBtn.style.backgroundColor = '#10B981';
+                    copyBtn.style.color = '#FFFFFF';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy ID';
+                        copyBtn.style.backgroundColor = '';
+                        copyBtn.style.color = '';
+                    }, 2000);
+                }
+            }).catch(() => {});
+        }
+    },
+
     openUPIScannerModal() {
         const fullname = document.getElementById('fullname') ? document.getElementById('fullname').value.trim() : '';
         const address = document.getElementById('address') ? document.getElementById('address').value.trim() : '';
         const city = document.getElementById('city') ? document.getElementById('city').value.trim() : '';
         const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
-        const errorEl = document.getElementById('checkout-error');
 
         if (!fullname || !address || !city || !zipcode) {
-            if (errorEl) {
-                errorEl.textContent = "Please fill out your contact & delivery address before paying via UPI.";
-                errorEl.style.display = 'block';
-            }
+            const missing = [];
+            if (!fullname) missing.push('fullname');
+            if (!address) missing.push('address');
+            if (!city) missing.push('city');
+            if (!zipcode) missing.push('zipcode');
+            this.showErrorNotification("Please fill out your contact & delivery address before paying via UPI.", missing);
             return;
         }
 
@@ -396,7 +470,8 @@ const checkout = {
         const addressVal = document.getElementById('address').value.trim();
         const cityVal = document.getElementById('city').value.trim();
         const zipcodeVal = document.getElementById('zipcode').value.trim();
-        const shipping = `${addressVal}, ${cityVal}, ${zipcodeVal}`;
+        const stateVal = document.getElementById('state') ? document.getElementById('state').value.trim() : '';
+        const shipping = `${addressVal}, ${cityVal}, ${stateVal} - ${zipcodeVal}`;
 
         await this.completePaymentVerification(
             { order_id: 'UPI-' + Math.random().toString(36).substring(2, 10) },
