@@ -119,7 +119,6 @@ func main() {
 		}
 		
 		// Legacy auth aliases for frontend compatibility
-		api.GET("/auth/config", authHandler.GetAuthConfig)
 		api.POST("/register", authHandler.Register)
 		api.POST("/login", loginLimit, authHandler.Login)
 		api.POST("/google", authHandler.GoogleAuth)
