@@ -1513,3 +1513,27 @@ footer {
         font-size: 12px;
     }
 }
+
+/* Print / PDF Invoice Styling */
+@media print {
+    header, footer, nav, .no-print, .btn-cute, .cart-icon-btn {
+        display: none !important;
+    }
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+    }
+    .printable-invoice {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    .invoice-box {
+        border: 1px solid #ddd !important;
+        background: #ffffff !important;
+        padding: 20px !important;
+    }
+}

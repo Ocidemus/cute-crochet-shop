@@ -401,26 +401,58 @@ const checkout = {
                                         itemsReceiptHtml += `<li><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg> ${prodName} (x${item.quantity}) - ₹${(prodPrice * item.quantity).toFixed(2)}</li>`;
                                     });
 
+                                    const invoiceId = data.order_id ? 'INV-' + data.order_id.substring(0, 8).toUpperCase() : 'INV-RECEIPT';
+                                    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
                                     successDiv.innerHTML = `
-                                        <div class="order-success-screen cute-card">
-                                            <div class="success-checkmark-circle"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" style="width: 40px; height: 40px; stroke: #1E6652; vertical-align: middle;"><path d="M20 6 9 17l-5-5"/></svg></div>
+                                        <div class="order-success-screen cute-card printable-invoice">
+                                            <div class="success-checkmark-circle no-print"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" style="width: 40px; height: 40px; stroke: #1E6652; vertical-align: middle;"><path d="M20 6 9 17l-5-5"/></svg></div>
                                             <h2>Payment Successful!</h2>
-                                            <p>Thank you for buying handmade with love! Your order has been placed securely.</p>
+                                            <p class="no-print">Thank you for buying handmade with love! Your confirmation email has been sent and your order is placed securely.</p>
                                             
-                                            <div style="text-align: left; margin: 30px 0; background: var(--bg-main); padding: 20px; border-radius: var(--border-radius-md); border: 2px dashed var(--primary-light);">
-                                                <h4 style="margin-bottom:10px;">Order Details</h4>
+                                            <div style="text-align: left; margin: 25px 0; background: var(--bg-main); padding: 24px; border-radius: var(--border-radius-md); border: 2px dashed var(--primary-light);" class="invoice-box">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color, #EAE0D5); padding-bottom: 15px;">
+                                                    <div>
+                                                        <h3 style="margin-bottom: 4px; font-size: 20px; color: var(--primary);">CuteCrochet Shop</h3>
+                                                        <p style="font-size: 12px; color: var(--text-muted); margin:0;">Handmade Crochet Artisan Goods</p>
+                                                        <p style="font-size: 12px; color: var(--text-muted); margin:0;">Tax Invoice & Official Order Receipt</p>
+                                                    </div>
+                                                    <div style="text-align: right;">
+                                                        <p style="font-size: 13px; margin: 0;"><strong>Date:</strong> ${currentDate}</p>
+                                                        <p style="font-size: 13px; margin: 2px 0;"><strong>Invoice:</strong> ${invoiceId}</p>
+                                                        <p style="font-size: 13px; margin: 0;"><strong>Status:</strong> <span style="color:#1E6652; font-weight:700;">PAID & VERIFIED</span></p>
+                                                    </div>
+                                                </div>
+
                                                 <p style="font-size:14px; margin-bottom:5px;"><strong>Order ID:</strong> #${data.order_id}</p>
                                                 <p style="font-size:14px; margin-bottom:5px;"><strong>Transaction ID:</strong> ${paymentDetails.razorpay_payment_id}</p>
-                                                <p style="font-size:14px; margin-bottom:10px;"><strong>Deliver to:</strong> ${shipping}</p>
-                                                <p style="font-size:14px; margin-bottom:10px;"><strong>Payment Method:</strong> RAZORPAY SECURE GATEWAY</p>
-                                                <h5 style="margin-bottom:5px; font-family:var(--font-heading);">Items purchased:</h5>
-                                                <ul style="list-style:none; padding-left:0; font-size:13px; margin-bottom:10px;">
+                                                <p style="font-size:14px; margin-bottom:15px;"><strong>Deliver to:</strong> ${shipping}</p>
+                                                <p style="font-size:14px; margin-bottom:15px;"><strong>Payment Method:</strong> RAZORPAY SECURE GATEWAY</p>
+
+                                                <h5 style="margin-bottom:8px; font-family:var(--font-heading); font-size:15px;">Items purchased:</h5>
+                                                <ul style="list-style:none; padding-left:0; font-size:13px; margin-bottom:15px;">
                                                     ${itemsReceiptHtml}
                                                 </ul>
-                                                <p style="font-size:16px; font-weight:700; border-top: 1px dashed var(--primary); padding-top:10px;">Total Paid: ₹${this.total.toFixed(2)}</p>
+                                                <div style="display: flex; justify-content: space-between; font-size: 14px; border-top: 1px dashed var(--primary-light); padding-top: 8px;">
+                                                    <span>Subtotal:</span>
+                                                    <span>₹${this.subtotal.toFixed(2)}</span>
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 4px;">
+                                                    <span>Flat Shipping:</span>
+                                                    <span>₹${this.shipping.toFixed(2)}</span>
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; font-size:16px; font-weight:700; border-top: 2px solid var(--primary); padding-top:10px; margin-top: 10px; color: var(--primary);">
+                                                    <span>Total Paid:</span>
+                                                    <span>₹${this.total.toFixed(2)}</span>
+                                                </div>
                                             </div>
                                             
-                                            <a href="/index.html" class="btn-cute">Continue Shopping <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></a>
+                                            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;" class="no-print">
+                                                <button onclick="window.print()" class="btn-cute" style="background: #FFF0F3; color: var(--primary); border: 2px solid var(--primary-light); cursor: pointer;">
+                                                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Download Invoice (PDF)
+                                                </button>
+                                                <a href="/index.html" class="btn-cute">Continue Shopping <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></a>
+                                            </div>
                                         </div>
                                     `;
                                     successDiv.style.display = 'block';
