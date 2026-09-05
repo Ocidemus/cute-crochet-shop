@@ -395,8 +395,10 @@ const checkout = {
 
                                     let itemsReceiptHtml = '';
                                     this.cart.forEach(item => {
-                                        const prod = productsCatalog[item.product_id];
-                                        itemsReceiptHtml += `<li><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg> ${prod.name} (x${item.quantity}) - ₹${(prod.price * item.quantity).toFixed(2)}</li>`;
+                                        const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
+                                        const prodName = prod ? prod.name : item.product_id;
+                                        const prodPrice = prod ? prod.price : 499.00;
+                                        itemsReceiptHtml += `<li><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg> ${prodName} (x${item.quantity}) - ₹${(prodPrice * item.quantity).toFixed(2)}</li>`;
                                     });
 
                                     successDiv.innerHTML = `
