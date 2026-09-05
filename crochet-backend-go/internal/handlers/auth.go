@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"crochet-backend-go/internal/db"
@@ -156,6 +157,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Success: true,
 		User:    userPayload,
 		Token:   token,
+	})
+}
+
+// GetAuthConfig returns public authentication configuration (e.g. GOOGLE_CLIENT_ID from environment)
+func (h *AuthHandler) GetAuthConfig(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"googleClientId": os.Getenv("GOOGLE_CLIENT_ID"),
 	})
 }
 

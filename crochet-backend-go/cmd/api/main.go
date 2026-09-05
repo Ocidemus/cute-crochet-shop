@@ -112,12 +112,14 @@ func main() {
 		// Auth Endpoints
 		auth := api.Group("/auth")
 		{
+			auth.GET("/config", authHandler.GetAuthConfig)
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", loginLimit, authHandler.Login)
 			auth.POST("/google", authHandler.GoogleAuth)
 		}
 		
 		// Legacy auth aliases for frontend compatibility
+		api.GET("/auth/config", authHandler.GetAuthConfig)
 		api.POST("/register", authHandler.Register)
 		api.POST("/login", loginLimit, authHandler.Login)
 		api.POST("/google", authHandler.GoogleAuth)

@@ -75,6 +75,18 @@ const auth = {
         return data.user;
     },
 
+    async getAuthConfig() {
+        try {
+            const response = await fetch(`${API_BASE}/api/auth/config`);
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (e) {
+            console.warn("Failed to load auth config from server:", e);
+        }
+        return { googleClientId: "" };
+    },
+
     async googleAuth(credential) {
         const response = await fetch(`${API_BASE}/api/auth/google`, {
             method: 'POST',

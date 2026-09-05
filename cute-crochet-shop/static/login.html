@@ -220,10 +220,25 @@
         }
         window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 
-        // Redirect if already authenticated
-        window.addEventListener('DOMContentLoaded', () => {
+        // Dynamically initialize GOOGLE_CLIENT_ID from environment (.env)
+        window.addEventListener('DOMContentLoaded', async () => {
             if (window.auth.isAuthenticated()) {
                 window.location.href = redirect;
+                return;
+            }
+
+            const config = await window.auth.getAuthConfig();
+            if (config && config.googleClientId) {
+                const gLoad = document.getElementById('g_id_onload');
+                if (gLoad) {
+                    gLoad.setAttribute('data-client_id', config.googleClientId);
+                }
+                if (window.google && window.google.accounts) {
+                    window.google.accounts.id.initialize({
+                        client_id: config.googleClientId,
+                        callback: handleGoogleCredentialResponse
+                    });
+                }
             }
         });
     </script>
