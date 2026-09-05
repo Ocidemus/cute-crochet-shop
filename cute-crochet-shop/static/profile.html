@@ -69,11 +69,11 @@
                 <form id="profile-address-form" onsubmit="profile.saveProfileAddress(event)">
                     <div class="form-group" style="margin-bottom: 14px;">
                         <label for="profile-name" style="font-size: 13px;">Full Name</label>
-                        <input type="text" id="profile-name" placeholder="Your Full Name" required>
+                        <input type="text" id="profile-name" placeholder="Your Full Name" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                     </div>
                     <div class="form-group" style="margin-bottom: 14px;">
                         <label for="profile-phone" style="font-size: 13px;">Phone Number</label>
-                        <input type="tel" id="profile-phone" placeholder="+91 9876543210" required>
+                        <input type="tel" id="profile-phone" placeholder="+91 9876543210" maxlength="13" required oninput="this.value = this.value.replace(/[^0-9+]/g, '').slice(0, 13)">
                     </div>
                     <div class="form-group" style="margin-bottom: 14px;">
                         <label for="profile-line1" style="font-size: 13px;">Street Address / House No.</label>
@@ -86,15 +86,15 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;" class="address-row-split">
                         <div class="form-group" style="margin-bottom: 14px;">
                             <label for="profile-city" style="font-size: 13px;">City</label>
-                            <input type="text" id="profile-city" placeholder="Agra" required>
+                            <input type="text" id="profile-city" placeholder="Agra" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                         </div>
                         <div class="form-group" style="margin-bottom: 14px;">
                             <label for="profile-state" style="font-size: 13px;">State</label>
-                            <input type="text" id="profile-state" placeholder="Uttar Pradesh" required>
+                            <input type="text" id="profile-state" placeholder="Uttar Pradesh" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                         </div>
                         <div class="form-group" style="margin-bottom: 14px;">
                             <label for="profile-pincode" style="font-size: 13px;">Pincode</label>
-                            <input type="text" id="profile-pincode" placeholder="282001" required>
+                            <input type="text" id="profile-pincode" placeholder="282001" maxlength="6" required oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)">
                         </div>
                     </div>
                     <div id="profile-msg" style="margin-bottom: 10px; font-size: 13px; text-align: center; display: none;"></div>

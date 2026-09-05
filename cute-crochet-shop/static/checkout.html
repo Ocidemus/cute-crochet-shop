@@ -69,14 +69,15 @@
                     <!-- Step 1: Contact & Shipping Address -->
                     <div class="cute-card" style="margin-bottom: 25px;">
                         <h3 style="margin-bottom: 20px; border-bottom: 2px dashed var(--primary-light); padding-bottom: 10px;">1. Contact & Cozy Delivery Address</h3>
-                        <div class="card-row-split" style="margin-bottom: 14px;">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: start; margin-bottom: 14px;" class="card-row-split-equal">
                             <div class="form-group">
                                 <label for="fullname">Full Name <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></label>
-                                <input type="text" id="fullname" name="fullname" placeholder="Your Full Name" required>
+                                <input type="text" id="fullname" name="fullname" placeholder="Your Full Name" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                             </div>
                             <div class="form-group">
                                 <label for="phone">Phone Number <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></label>
-                                <input type="tel" id="phone" name="phone" placeholder="+91 9876543210" required>
+                                <input type="tel" id="phone" name="phone" placeholder="+91 9876543210" maxlength="13" required oninput="this.value = this.value.replace(/[^0-9+]/g, '').slice(0, 13)">
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 14px;">
@@ -90,35 +91,37 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;" class="address-row-split">
                             <div class="form-group">
                                 <label for="city">City <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg></label>
-                                <input type="text" id="city" name="city" placeholder="Agra" required>
+                                <input type="text" id="city" name="city" placeholder="Agra" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                             </div>
                             <div class="form-group">
                                 <label for="state">State <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></label>
-                                <input type="text" id="state" name="state" placeholder="Uttar Pradesh" required>
+                                <input type="text" id="state" name="state" placeholder="Uttar Pradesh" required oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
                             </div>
                             <div class="form-group">
                                 <label for="zipcode">Zip Code <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m2 7 8.2 5.5a3 3 0 0 0 3.6 0L22 7"/></svg></label>
-                                <input type="text" id="zipcode" name="zipcode" placeholder="282001" required>
+                                <input type="text" id="zipcode" name="zipcode" placeholder="282001" maxlength="6" required oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 2: Secure Gateway Payment -->
+                    <!-- Step 2: Payment Options -->
                     <div class="cute-card">
                         <h3 style="margin-bottom: 15px; border-bottom: 2px dashed var(--primary-light); padding-bottom: 10px; color: var(--primary-dark);">2. Select Payment Method & Place Order</h3>
                         
-                        <div style="background: #FFF5F7; border: 1.5px dashed #FF8DA1; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
-                            <p style="font-size: 14px; font-weight: 700; color: var(--primary-dark); margin: 0 0 8px 0;">⚡ 1-Click Secure Payment Gateway</p>
-                            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 14px 0;">You will enter your payment details directly in the Razorpay secure gateway window. No double typing required!</p>
+                        <div style="background: #FFF5F7; border: 1.5px dashed #FF8DA1; border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 20px;">
+                            <p style="font-size: 14px; font-weight: 700; color: var(--primary-dark); margin: 0 0 10px 0;">⚡ Payment Gateway & Instant Options</p>
                             
                             <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="trust-badge" style="background: #FFFFFF; border: 1px solid #FFD6E0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4A3B40;">💳 Credit & Debit Cards</span>
-                                <span class="trust-badge" style="background: #FFFFFF; border: 1px solid #FFD6E0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4A3B40;">📱 UPI (GPay, PhonePe, Paytm)</span>
+                                <span class="trust-badge" style="background: #FFFFFF; border: 1px solid #FFD6E0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4A3B40;">📱 Instant UPI / QR (GPay, PhonePe, Paytm)</span>
                                 <span class="trust-badge" style="background: #FFFFFF; border: 1px solid #FFD6E0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4A3B40;">🏦 Netbanking</span>
                             </div>
                         </div>
 
-                        <button type="submit" id="checkout-submit-btn" class="btn-cute" style="width: 100%; text-align: center; margin-top: 10px; font-size: 16px; padding: 14px 20px;">Pay & Place Order ₹0.00 <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                        <div style="display: flex; gap: 10px; flex-direction: column;">
+                            <button type="submit" id="checkout-submit-btn" class="btn-cute" style="width: 100%; text-align: center; font-size: 16px; padding: 14px 20px;">Pay & Place Order ₹0.00 <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                            <button type="button" class="btn-cute btn-secondary" onclick="checkout.openUPIScannerModal()" style="width: 100%; text-align: center; font-size: 14px; padding: 12px 18px;">📱 Pay Directly via Instant UPI QR (GPay / PhonePe) &rarr;</button>
+                        </div>
                     </div>
                 </form>
             </div>

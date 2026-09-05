@@ -151,19 +151,45 @@ const checkout = {
             if (errorEl) errorEl.style.display = 'none';
 
             const fullname = form.fullname.value.trim();
+            const phoneVal = form.phone ? form.phone.value.trim() : '';
             const addressVal = form.address.value.trim();
             const cityVal = form.city.value.trim();
+            const stateVal = form.state ? form.state.value.trim() : '';
             const zipcodeVal = form.zipcode.value.trim();
 
             if (!fullname || !addressVal || !cityVal || !zipcodeVal) {
                 if (errorEl) {
-                    errorEl.textContent = "Please fill out all required shipping address fields.";
+                    errorEl.textContent = "Please fill out all required contact & shipping address fields.";
                     errorEl.style.display = 'block';
                 }
                 return;
             }
 
-            const shipping = `${addressVal}, ${cityVal}, ${zipcodeVal}`;
+            if (/\d/.test(fullname)) {
+                if (errorEl) {
+                    errorEl.textContent = "Full Name cannot contain numbers. Please enter text only.";
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (/\d/.test(cityVal) || /\d/.test(stateVal)) {
+                if (errorEl) {
+                    errorEl.textContent = "City and State cannot contain numbers. Please enter text only.";
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (zipcodeVal && !/^\d{6}$/.test(zipcodeVal)) {
+                if (errorEl) {
+                    errorEl.textContent = "Zip code must be a valid 6-digit number.";
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            const shipping = `${addressVal}, ${cityVal}, ${stateVal} - ${zipcodeVal}`;
             let paymentToken = 'tok_razorpay_' + Math.random().toString(36).substring(2, 12);
 
             loader.querySelector('h3').innerHTML = 'Connecting Secure Payment Gateway...';
@@ -262,6 +288,7 @@ const checkout = {
             if (verifyResponse.ok && verifyData.success) {
                 loader.classList.remove('active');
                 if (checkoutCard) checkoutCard.style.display = 'none';
+                if (successDiv) successDiv.style.display = 'block';
 
                 // Clear cart after successful checkout
                 localStorage.removeItem('crochet_local_cart');
@@ -336,6 +363,50 @@ const checkout = {
             loader.classList.remove('active');
             alert("Network error verifying payment.");
         }
+    },
+
+    openUPIScannerModal() {
+        const fullname = document.getElementById('fullname') ? document.getElementById('fullname').value.trim() : '';
+        const address = document.getElementById('address') ? document.getElementById('address').value.trim() : '';
+        const city = document.getElementById('city') ? document.getElementById('city').value.trim() : '';
+        const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
+        const errorEl = document.getElementById('checkout-error');
+
+        if (!fullname || !address || !city || !zipcode) {
+            if (errorEl) {
+                errorEl.textContent = "Please fill out your contact & delivery address before paying via UPI.";
+                errorEl.style.display = 'block';
+            }
+            return;
+        }
+
+        const modal = document.getElementById('upi-qr-modal');
+        const totalEl = document.getElementById('upi-qr-total');
+        if (totalEl) totalEl.textContent = `Total Amount: ₹${this.total.toFixed(2)}`;
+        if (modal) modal.classList.add('active');
+    },
+
+    closeUPILightbox() {
+        const modal = document.getElementById('upi-qr-modal');
+        if (modal) modal.classList.remove('active');
+    },
+
+    async confirmUPIPayment() {
+        this.closeUPILightbox();
+        const addressVal = document.getElementById('address').value.trim();
+        const cityVal = document.getElementById('city').value.trim();
+        const zipcodeVal = document.getElementById('zipcode').value.trim();
+        const shipping = `${addressVal}, ${cityVal}, ${zipcodeVal}`;
+
+        await this.completePaymentVerification(
+            { order_id: 'UPI-' + Math.random().toString(36).substring(2, 10) },
+            {
+                razorpay_payment_id: "pay_upi_" + Math.random().toString(36).substring(2, 12),
+                razorpay_order_id: "order_upi_" + Math.random().toString(36).substring(2, 12),
+                razorpay_signature: "sig_upi_" + Math.random().toString(36).substring(2, 12)
+            },
+            shipping
+        );
     }
 };
 
