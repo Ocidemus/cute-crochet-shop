@@ -1,6 +1,9 @@
 # Stage 1: Build the Go backend binary
 FROM golang:1.24-alpine AS builder
 
+# Enable automatic toolchain management
+ENV GOTOOLCHAIN=auto
+
 RUN apk add --no-cache git gcc musl-dev
 
 WORKDIR /app
