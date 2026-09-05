@@ -706,15 +706,40 @@ const app = {
         e.preventDefault();
         
         const form = e.target;
-        const name = form.name.value;
-        const email = form.email.value;
-        const message = form.message.value;
+        const name = form.name.value.trim();
+        const email = form.email.value.trim();
+        const message = form.message.value.trim();
         
         const errorEl = document.getElementById('contact-error');
         const successEl = document.getElementById('contact-success');
+        const msgTextarea = document.getElementById('contact-message');
         
-        errorEl.style.display = 'none';
-        successEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
+        if (msgTextarea) {
+            msgTextarea.style.border = '';
+            msgTextarea.style.backgroundColor = '';
+        }
+
+        // Profanity filter regex
+        const profanityRegex = /\b(fuck|fucking|fucked|fucker|shit|shitting|bitch|bitches|bitching|asshole|bastard|cunt|dick|pussy|whore|slut|motherfucker|cock|crap|damn|bullshit|dumbass|douchebag)\b/i;
+
+        if (profanityRegex.test(name) || profanityRegex.test(message)) {
+            if (errorEl) {
+                errorEl.innerHTML = `
+                    <div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px;">
+                        <svg class="icon-inline" style="width: 20px; height: 20px; stroke: #D32F2F; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span style="color: #5A3A40; font-size: 13px; font-weight: 600;">Profanity or offensive language is not allowed. Please keep your message cozy & polite! 🌸</span>
+                    </div>
+                `;
+                errorEl.style.display = 'block';
+            }
+            if (msgTextarea) {
+                msgTextarea.style.border = '2px solid #FF8DA1';
+                msgTextarea.style.backgroundColor = '#FFF5F7';
+            }
+            return;
+        }
         
         try {
             const response = await fetch('/api/contact', {
@@ -724,17 +749,21 @@ const app = {
             });
             
             const data = await response.json();
-            if (response.ok) {
+            if (response.ok && data.success) {
                 successEl.innerHTML = "Your cute message was sent! We'll reply within 24 hours. <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2'><circle cx='12' cy='12' r='2.5' class='icon-filled'/><circle cx='12' cy='6.5' r='2.5'/><circle cx='17' cy='10' r='2.5'/><circle cx='15.5' cy='16' r='2.5'/><circle cx='8.5' cy='16' r='2.5'/><circle cx='7' cy='10' r='2.5'></svg>";
                 successEl.style.display = 'block';
                 form.reset();
             } else {
-                errorEl.textContent = data.error || "Failed to send message.";
-                errorEl.style.display = 'block';
+                if (errorEl) {
+                    errorEl.textContent = data.error || "Failed to send message.";
+                    errorEl.style.display = 'block';
+                }
             }
         } catch (err) {
-            errorEl.textContent = "A network error occurred. Please try again.";
-            errorEl.style.display = 'block';
+            if (errorEl) {
+                errorEl.textContent = "A network error occurred. Please try again.";
+                errorEl.style.display = 'block';
+            }
         }
     },
 

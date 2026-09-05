@@ -72,6 +72,8 @@ func main() {
 	adminHandler := &handlers.AdminHandler{Queries: *queries, DB: dbPool}
 	addressesHandler := &handlers.AddressesHandler{Queries: *queries, DB: dbPool}
 
+	contactHandler := &handlers.ContactHandler{}
+
 	// 4. Initialize Gin Framework
 	if os.Getenv("NODE_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -109,6 +111,9 @@ func main() {
 	// 5. Mount API Routes
 	api := r.Group("/api")
 	{
+		// Contact Form Endpoint
+		api.POST("/contact", contactHandler.SubmitContact)
+
 		// Auth Endpoints
 		auth := api.Group("/auth")
 		{
