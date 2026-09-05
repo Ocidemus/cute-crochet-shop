@@ -79,21 +79,11 @@
             </div>
 
             <!-- Google Auth Divider & Button (Shared for Sign In & Register) -->
-            <div style="text-align: center; margin: 24px 0 12px; border-top: 2px dashed var(--stitch-color, #EAE0D5); padding-top: 20px;">
+            <div id="google-signin-wrapper" style="text-align: center; margin: 24px 0 12px; border-top: 2px dashed var(--stitch-color, #EAE0D5); padding-top: 20px;">
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">- OR CONTINUE WITH GOOGLE -</p>
-                <div id="g_id_onload"
-                     data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                     data-callback="handleGoogleCredentialResponse"
-                     data-auto_prompt="false">
-                </div>
-                <div class="g_id_signin"
-                     data-type="standard"
-                     data-shape="pill"
-                     data-theme="outline"
-                     data-text="signin_with"
-                     data-size="large"
-                     data-logo_alignment="left"
-                     style="display: flex; justify-content: center;">
+                <div id="google-btn-container" style="display: flex; justify-content: center; min-height: 44px;"></div>
+                <div id="google-config-notice" style="display: none; font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 6px;">
+                    🌸 Google Sign-In ready! Set <code>GOOGLE_CLIENT_ID</code> in environment to enable.
                 </div>
             </div>
         </div>
@@ -224,26 +214,44 @@
         window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 
         // Dynamically initialize GOOGLE_CLIENT_ID from environment (.env)
-        window.addEventListener('DOMContentLoaded', async () => {
+        async function initGoogleAuth() {
             if (window.auth.isAuthenticated()) {
                 window.location.href = redirect;
                 return;
             }
 
             const config = await window.auth.getAuthConfig();
-            if (config && config.googleClientId) {
-                const gLoad = document.getElementById('g_id_onload');
-                if (gLoad) {
-                    gLoad.setAttribute('data-client_id', config.googleClientId);
-                }
-                if (window.google && window.google.accounts) {
-                    window.google.accounts.id.initialize({
-                        client_id: config.googleClientId,
-                        callback: handleGoogleCredentialResponse
-                    });
-                }
+            const btnContainer = document.getElementById('google-btn-container');
+            const noticeEl = document.getElementById('google-config-notice');
+
+            if (config && config.googleClientId && config.googleClientId !== 'YOUR_GOOGLE_CLIENT_ID' && config.googleClientId.trim() !== '') {
+                const checkGoogleSDK = setInterval(() => {
+                    if (window.google && window.google.accounts && window.google.accounts.id) {
+                        clearInterval(checkGoogleSDK);
+                        window.google.accounts.id.initialize({
+                            client_id: config.googleClientId,
+                            callback: handleGoogleCredentialResponse,
+                            auto_select: false
+                        });
+                        if (btnContainer) {
+                            btnContainer.innerHTML = '';
+                            window.google.accounts.id.renderButton(btnContainer, {
+                                type: 'standard',
+                                shape: 'pill',
+                                theme: 'outline',
+                                text: 'signin_with',
+                                size: 'large',
+                                logo_alignment: 'left'
+                            });
+                        }
+                        if (noticeEl) noticeEl.style.display = 'none';
+                    }
+                }, 100);
+            } else {
+                if (noticeEl) noticeEl.style.display = 'block';
             }
-        });
+        }
+        window.addEventListener('DOMContentLoaded', initGoogleAuth);
     </script>
 </body>
 </html>
