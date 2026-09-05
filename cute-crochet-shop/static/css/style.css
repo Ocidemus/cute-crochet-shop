@@ -1214,32 +1214,48 @@ footer {
 /* Tablet & Smaller Screens (<= 768px) */
 @media (max-width: 768px) {
     .nav-container {
-        padding: 10px 14px;
+        display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        gap: 8px;
     }
 
     .logo {
         font-size: 20px;
+        order: 1;
+    }
+
+    /* Group user profile / auth status & cart icon side-by-side on top right */
+    .user-profile, .cart-icon-btn {
+        order: 2;
+    }
+
+    nav {
+        order: 3;
+        width: 100%;
     }
 
     .nav-links {
-        gap: 8px;
+        display: flex;
+        gap: 6px;
         width: 100%;
-        order: 3;
         justify-content: center;
         margin-top: 6px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--primary-light);
         flex-wrap: wrap;
     }
 
     .nav-links a {
         font-size: 13px;
-        padding: 5px 12px;
+        padding: 5px 10px;
     }
 
     .user-profile {
         font-size: 12px;
-        gap: 8px;
+        gap: 6px;
     }
 
     .logout-btn {
@@ -1259,6 +1275,30 @@ footer {
     .section-title {
         font-size: 26px;
         margin-bottom: 25px;
+    }
+
+    .hero-section {
+        border-radius: 18px;
+        border-width: 2px;
+        margin-bottom: 30px;
+    }
+
+    .hero-overlay {
+        padding: 16px;
+        background: linear-gradient(to top, rgba(226, 123, 138, 0.92) 0%, rgba(226, 123, 138, 0.5) 75%, transparent 100%);
+    }
+
+    .hero-overlay h1 {
+        font-size: 24px;
+        margin-bottom: 4px;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        word-break: break-word;
+    }
+
+    .hero-overlay p {
+        font-size: 13px;
+        line-height: 1.4;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
     .hero-cozy-container {
@@ -1315,6 +1355,22 @@ footer {
     .nav-links a {
         font-size: 12px;
         padding: 4px 8px;
+    }
+
+    /* Hero overlay sizing for smartphones to prevent text cut-off */
+    .hero-overlay {
+        padding: 12px 14px;
+    }
+
+    .hero-overlay h1 {
+        font-size: 20px;
+        margin-bottom: 3px;
+        letter-spacing: -0.01em;
+    }
+
+    .hero-overlay p {
+        font-size: 12px;
+        line-height: 1.3;
     }
 
     .section-title {
