@@ -1,0 +1,19 @@
+# CuteCrochet Shop Robots.txt
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /css/
+Allow: /js/
+Allow: /index.html
+Allow: /about.html
+Allow: /contact.html
+Allow: /cart.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /refund.html
+
+Disallow: /admin.html
+Disallow: /api/admin/
+Disallow: /api/orders/verify
+
+Sitemap: https://cutecrochet.shop/sitemap.xml

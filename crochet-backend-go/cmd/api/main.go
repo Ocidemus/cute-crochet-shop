@@ -185,6 +185,11 @@ func main() {
 	r.StaticFile("/login.html", filepath.Join(staticDir, "login.html"))
 	r.StaticFile("/orders.html", filepath.Join(staticDir, "orders.html"))
 	r.StaticFile("/admin.html", filepath.Join(staticDir, "admin.html"))
+	r.StaticFile("/privacy.html", filepath.Join(staticDir, "privacy.html"))
+	r.StaticFile("/terms.html", filepath.Join(staticDir, "terms.html"))
+	r.StaticFile("/refund.html", filepath.Join(staticDir, "refund.html"))
+	r.StaticFile("/sitemap.xml", filepath.Join(staticDir, "sitemap.xml"))
+	r.StaticFile("/robots.txt", filepath.Join(staticDir, "robots.txt"))
 
 	// Start Gin Server
 	log.Printf("Go Crochet Backend running on port %s...", port)

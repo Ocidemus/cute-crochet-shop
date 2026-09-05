@@ -280,7 +280,25 @@ const app = {
         this.saveCartItem(finalProductId, quantity, false);
         
         const resolved = this.getProduct(finalProductId);
-        this.showToast(`Added ${resolved.name} to your cart!`);
+        this.showToast(`Added ${quantity}x ${resolved.name} to your cart!`);
+    },
+
+    cardQuantities: {},
+
+    changeCardQty(prodId, delta) {
+        if (!this.cardQuantities[prodId]) {
+            this.cardQuantities[prodId] = 1;
+        }
+        this.cardQuantities[prodId] = Math.max(1, this.cardQuantities[prodId] + delta);
+        const qtyEl = document.getElementById(`qty-${prodId}`);
+        if (qtyEl) {
+            qtyEl.textContent = this.cardQuantities[prodId];
+        }
+    },
+
+    addToCartWithQty(productId) {
+        const qty = this.cardQuantities[productId] || 1;
+        this.addToCart(productId, qty);
     },
 
     showToast(message) {
@@ -349,13 +367,20 @@ const app = {
                     ${optionsHtml}
                     <div class="product-bottom">
                         <span class="product-price" id="price-${prod.id}">₹${prod.price.toFixed(2)}</span>
-                        <button class="btn-add-cart" title="Add to Basket" onclick="app.addToCart('${prod.id}')">
-                            <svg class="icon-inline" style="stroke: var(--white); width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                                <circle cx="9" cy="20" r="1.5" class="icon-filled"/>
-                                <circle cx="18" cy="20" r="1.5" class="icon-filled"/>
-                                <path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/>
-                            </svg>
-                        </button>
+                        <div class="card-action-group" style="display: flex; align-items: center; gap: 8px;">
+                            <div class="card-qty-stepper">
+                                <button type="button" class="card-qty-btn" onclick="app.changeCardQty('${prod.id}', -1)" title="Decrease Quantity">-</button>
+                                <span class="card-qty-val" id="qty-${prod.id}">1</span>
+                                <button type="button" class="card-qty-btn" onclick="app.changeCardQty('${prod.id}', 1)" title="Increase Quantity">+</button>
+                            </div>
+                            <button class="btn-add-cart" title="Add to Basket" onclick="app.addToCartWithQty('${prod.id}')">
+                                <svg class="icon-inline" style="stroke: var(--white); width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <circle cx="9" cy="20" r="1.5" class="icon-filled"/>
+                                    <circle cx="18" cy="20" r="1.5" class="icon-filled"/>
+                                    <path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -367,14 +392,14 @@ const app = {
         if (prod.images.length === 1) {
             return `
                 <div class="product-image-slider" onclick="app.openLightbox('${prod.images[0]}')">
-                    <img src="${prod.images[0]}" alt="${prod.name}">
+                    <img src="${prod.images[0]}" alt="Handcrafted ${prod.name} plushie keychain" loading="lazy">
                 </div>
             `;
         }
         
         let slidesHtml = '';
         prod.images.forEach((img, idx) => {
-            slidesHtml += `<img src="${img}" alt="${prod.name}" class="slide-img" style="display: ${idx === 0 ? 'block' : 'none'}; width:100%; height:100%;">`;
+            slidesHtml += `<img src="${img}" alt="Handcrafted ${prod.name} plushie keychain photo ${idx + 1}" class="slide-img" loading="lazy" style="display: ${idx === 0 ? 'block' : 'none'}; width:100%; height:100%;">`;
         });
         
         return `

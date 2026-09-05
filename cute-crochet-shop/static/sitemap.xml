@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+    
+    <!-- Main Home / Catalog Page -->
+    <url>
+        <loc>https://cutecrochet.shop/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+        <image:image>
+            <image:loc>https://cutecrochet.shop/assets/hero_banner.jpg</image:loc>
+            <image:title>Handmade Crochet Plushies and Keychains Collection</image:title>
+        </image:image>
+    </url>
+    
+    <!-- About Page -->
+    <url>
+        <loc>https://cutecrochet.shop/about.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Contact Page -->
+    <url>
+        <loc>https://cutecrochet.shop/contact.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Cart Page -->
+    <url>
+        <loc>https://cutecrochet.shop/cart.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Account / Login Page -->
+    <url>
+        <loc>https://cutecrochet.shop/login.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <!-- Privacy Policy -->
+    <url>
+        <loc>https://cutecrochet.shop/privacy.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <!-- Terms of Service -->
+    <url>
+        <loc>https://cutecrochet.shop/terms.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <!-- Refund & Returns Policy -->
+    <url>
+        <loc>https://cutecrochet.shop/refund.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+</urlset>
