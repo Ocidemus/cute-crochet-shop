@@ -14,9 +14,47 @@ const checkout = {
             return;
         }
 
-        this.setupCardInputs();
         await this.loadCheckoutItems();
+        await this.autoFillSavedAddress();
         this.setupFormSubmit();
+    },
+
+    async autoFillSavedAddress() {
+        let saved = localStorage.getItem('saved_shipping_address');
+        let data = saved ? JSON.parse(saved) : null;
+
+        const token = app.getToken();
+        if (token) {
+            try {
+                const resp = await fetch('/api/user/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const pData = await resp.json();
+                if (pData.success && pData.user) {
+                    if (!data) data = {};
+                    data.name = pData.user.name || data.name;
+                    data.phone = pData.user.phone || data.phone;
+                    data.email = pData.user.email || data.email;
+                    if (pData.address) {
+                        data.line1 = pData.address.line1;
+                        data.line2 = pData.address.line2;
+                        data.city = pData.address.city;
+                        data.state = pData.address.state;
+                        data.pincode = pData.address.pincode;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        if (data) {
+            if (data.name && document.getElementById('fullname')) document.getElementById('fullname').value = data.name;
+            if (data.email && document.getElementById('email')) document.getElementById('email').value = data.email;
+            if (data.phone && document.getElementById('phone')) document.getElementById('phone').value = data.phone;
+            if (data.line1 && document.getElementById('address')) document.getElementById('address').value = data.line1 + (data.line2 ? ', ' + data.line2 : '');
+            if (data.city && document.getElementById('city')) document.getElementById('city').value = data.city;
+            if (data.state && document.getElementById('state')) document.getElementById('state').value = data.state;
+            if (data.pincode && document.getElementById('zipcode')) document.getElementById('zipcode').value = data.pincode;
+        }
     },
 
     switchPaymentMethod(method) {
@@ -275,47 +313,10 @@ const checkout = {
             errorEl.style.display = 'none';
 
             const shipping = form.address.value + ', ' + form.city.value + ', ' + form.zipcode.value;
-            let paymentToken = '';
+            let paymentToken = 'tok_razorpay_' + Math.random().toString(36).substring(2, 12);
 
-            // Handle validations based on payment method
-            if (this.activePaymentMethod === 'card') {
-                const cardNum = form['card-number'].value;
-                const cardExpiry = form['card-expiry'].value;
-                const cardCvv = form['card-cvv'].value;
-
-                const validationError = this.validateCard(cardNum, cardExpiry, cardCvv);
-                if (validationError) {
-                    errorEl.textContent = validationError;
-                    errorEl.style.display = 'block';
-                    return;
-                }
-                
-                // Show card processing text
-                loader.querySelector('h3').innerHTML = 'Verifying Card Details...';
-                loader.querySelector('p').innerHTML = 'Securing connection with bank server... <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg>';
-                paymentToken = 'tok_card_' + Math.random().toString(36).substring(2, 12);
-            } else {
-                const upiId = document.getElementById('upi-id').value;
-                
-                // If not QR confirmed, validate UPI ID
-                if (!this.qrPaymentConfirmed) {
-                    const upiError = this.validateUPI(upiId);
-                    if (upiError) {
-                        errorEl.textContent = upiError;
-                        errorEl.style.display = 'block';
-                        return;
-                    }
-                    
-                    loader.querySelector('h3').innerHTML = 'Sending UPI Request...';
-                    loader.querySelector('p').innerHTML = 'Please open your UPI app to approve payment... <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>';
-                    paymentToken = 'tok_upi_collect_' + Math.random().toString(36).substring(2, 12);
-                } else {
-                    // QR flow
-                    loader.querySelector('h3').innerHTML = 'Confirming UPI Payment...';
-                    loader.querySelector('p').innerHTML = 'Checking bank ledger database... <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg>';
-                    paymentToken = 'tok_upi_qr_' + Math.random().toString(36).substring(2, 12);
-                }
-            }
+            loader.querySelector('h3').innerHTML = 'Connecting Secure Payment Gateway...';
+            loader.querySelector('p').innerHTML = 'Initializing SSL connection with Razorpay payment servers...';
 
             // Show secure processing animation overlay
             loader.classList.add('active');

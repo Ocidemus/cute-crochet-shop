@@ -443,21 +443,84 @@ const app = {
         if (images[newIdx]) images[newIdx].style.display = 'block';
     },
 
-    openLightbox(imageSrc) {
+    currentLightboxImages: [],
+    currentLightboxIdx: 0,
+
+    openLightbox(imageSrc, prodId, imageIdx) {
         const lightbox = document.getElementById('lightbox-modal');
         const lightboxImg = document.getElementById('lightbox-img');
         if (!lightbox || !lightboxImg) return;
-        
-        lightboxImg.src = imageSrc;
+
+        let prod = prodId ? this.getProduct(prodId) : null;
+        if (!prod && imageSrc) {
+            for (let k in PRODUCTS) {
+                if (PRODUCTS[k].images && PRODUCTS[k].images.includes(imageSrc)) {
+                    prod = PRODUCTS[k];
+                    break;
+                }
+            }
+        }
+
+        if (prod && prod.images && prod.images.length > 0) {
+            this.currentLightboxImages = prod.images;
+            if (typeof imageIdx === 'number') {
+                this.currentLightboxIdx = imageIdx;
+            } else {
+                const foundIdx = prod.images.indexOf(imageSrc);
+                this.currentLightboxIdx = foundIdx !== -1 ? foundIdx : 0;
+            }
+        } else {
+            this.currentLightboxImages = [imageSrc];
+            this.currentLightboxIdx = 0;
+        }
+
+        this.updateLightboxUI();
         lightbox.classList.add('active');
     },
 
     openLightboxForSlider(prodId) {
-        const prod = PRODUCTS[prodId];
+        const prod = this.getProduct(prodId);
         if (!prod) return;
         const idx = this.currentSlideIdx[prodId] || 0;
-        const imageSrc = prod.images[idx];
-        this.openLightbox(imageSrc);
+        this.openLightbox(prod.images[idx], prodId, idx);
+    },
+
+    updateLightboxUI() {
+        const lightboxImg = document.getElementById('lightbox-img');
+        const prevBtn = document.getElementById('lightbox-prev');
+        const nextBtn = document.getElementById('lightbox-next');
+        const counter = document.getElementById('lightbox-counter');
+
+        if (!lightboxImg) return;
+
+        const total = this.currentLightboxImages.length;
+        const currentSrc = this.currentLightboxImages[this.currentLightboxIdx] || '';
+        lightboxImg.src = currentSrc;
+
+        if (total > 1) {
+            if (prevBtn) prevBtn.style.display = 'flex';
+            if (nextBtn) nextBtn.style.display = 'flex';
+            if (counter) {
+                counter.style.display = 'block';
+                counter.innerText = `${this.currentLightboxIdx + 1} / ${total}`;
+            }
+        } else {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (counter) counter.style.display = 'none';
+        }
+    },
+
+    prevLightboxImage() {
+        if (!this.currentLightboxImages.length) return;
+        this.currentLightboxIdx = (this.currentLightboxIdx - 1 + this.currentLightboxImages.length) % this.currentLightboxImages.length;
+        this.updateLightboxUI();
+    },
+
+    nextLightboxImage() {
+        if (!this.currentLightboxImages.length) return;
+        this.currentLightboxIdx = (this.currentLightboxIdx + 1) % this.currentLightboxImages.length;
+        this.updateLightboxUI();
     },
 
     closeLightbox() {
@@ -641,6 +704,19 @@ const app = {
                 }
             });
         }
+
+        document.addEventListener('keydown', (e) => {
+            const lb = document.getElementById('lightbox-modal');
+            if (lb && lb.classList.contains('active')) {
+                if (e.key === 'ArrowLeft') {
+                    this.prevLightboxImage();
+                } else if (e.key === 'ArrowRight') {
+                    this.nextLightboxImage();
+                } else if (e.key === 'Escape') {
+                    this.closeLightbox();
+                }
+            }
+        });
         
         const contactForm = document.getElementById('contact-form');
         if (contactForm) {

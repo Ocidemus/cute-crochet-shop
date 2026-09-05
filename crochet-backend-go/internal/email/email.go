@@ -24,7 +24,7 @@ func NewEmailService() *EmailService {
 	apiKey := os.Getenv("RESEND_API_KEY")
 	sender := os.Getenv("SENDER_EMAIL")
 	if sender == "" {
-		sender = "CuteCrochet Shop <orders@cutecrochet.shop>"
+		sender = "CuteCrochet Shop <craftingforyouofficial@gmail.com>"
 	}
 	return &EmailService{
 		ResendAPIKey: apiKey,
@@ -189,3 +189,91 @@ func (e *EmailService) SendOrderConfirmation(toEmail, customerName, orderID stri
 	// Fallback logging mode when no email provider keys are set
 	log.Printf("🌸 [MOCK EMAIL DISPATCH] Order confirmation email prepared for %s (Order #%s, Amount ₹%.2f). Configure SMTP_HOST or RESEND_API_KEY in .env for live email delivery.", toEmail, orderID, totalAmount)
 }
+
+// SendOTPEmail dispatches a 6-digit verification code to a user during registration/verification
+func (e *EmailService) SendOTPEmail(toEmail, otpCode string) {
+	if toEmail == "" {
+		log.Printf("[INFO] Cannot send OTP: recipient email is empty")
+		return
+	}
+
+	subject := fmt.Sprintf("🔒 Your CuteCrochet Verification Code: %s", otpCode)
+
+	htmlBody := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<style>
+				body { font-family: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #FFFDF8; margin: 0; padding: 20px; color: #4A3B40; }
+				.card { max-width: 500px; margin: 0 auto; background: #FFFFFF; border: 2px solid #FFD6E0; border-radius: 16px; padding: 30px; box-shadow: 0 4px 15px rgba(255, 141, 161, 0.1); text-align: center; }
+				.title { color: #D84A67; font-size: 22px; font-weight: 700; margin: 10px 0 6px 0; }
+				.otp-box { background: #FFF5F7; border: 2px dashed #FF8DA1; border-radius: 12px; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #D84A67; padding: 16px; margin: 20px 0; display: inline-block; width: 80%%; }
+				.footer { margin-top: 25px; font-size: 12px; color: #A08890; }
+			</style>
+		</head>
+		<body>
+			<div class="card">
+				<div style="font-size: 36px;">🧸🔑</div>
+				<div class="title">Verify Your Email Address</div>
+				<p style="color: #7A656C; font-size: 14px;">Welcome to CuteCrochet Shop! Use the verification code below to verify your email address and complete registration:</p>
+				<div class="otp-box">%s</div>
+				<p style="font-size: 12px; color: #A08890;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+				<div class="footer">
+					<p>Handmade with ❤️ by CuteCrochet Shop © 2026</p>
+				</div>
+			</div>
+		</body>
+		</html>
+	`, otpCode)
+
+	if e.SMTPHost != "" {
+		port := e.SMTPPort
+		if port == "" {
+			port = "587"
+		}
+		addr := fmt.Sprintf("%s:%s", e.SMTPHost, port)
+		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPass, e.SMTPHost)
+
+		mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+		msg := []byte(fmt.Sprintf("From: %s\nTo: %s\nSubject: %s\n%s%s", e.SenderEmail, toEmail, subject, mime, htmlBody))
+
+		err := smtp.SendMail(addr, auth, e.SenderEmail, []string{toEmail}, msg)
+		if err != nil {
+			log.Printf("[ERROR] SMTP OTP dispatch failed for %s: %v", toEmail, err)
+		} else {
+			log.Printf("🔒 [SUCCESS] OTP email sent via SMTP to %s", toEmail)
+			return
+		}
+	}
+
+	if e.ResendAPIKey != "" {
+		reqPayload := ResendEmailRequest{
+			From:    e.SenderEmail,
+			To:      []string{toEmail},
+			Subject: subject,
+			HTML:    htmlBody,
+		}
+
+		jsonBytes, err := json.Marshal(reqPayload)
+		if err == nil {
+			req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonBytes))
+			if err == nil {
+				req.Header.Set("Authorization", "Bearer "+e.ResendAPIKey)
+				req.Header.Set("Content-Type", "application/json")
+				client := &http.Client{Timeout: 10 * time.Second}
+				resp, err := client.Do(req)
+				if err == nil {
+					defer resp.Body.Close()
+					if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+						log.Printf("🔒 [SUCCESS] OTP email dispatched via Resend to %s", toEmail)
+						return
+					}
+				}
+			}
+		}
+	}
+
+	log.Printf("🔒 [MOCK OTP DISPATCH] Verification code [%s] generated for %s. (Valid for 10 minutes)", otpCode, toEmail)
+}
+

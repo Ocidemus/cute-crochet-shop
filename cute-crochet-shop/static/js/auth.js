@@ -35,11 +35,24 @@ const auth = {
         }
     },
 
-    async register(username, email, password) {
+    async sendOTP(email) {
+        const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to send OTP code.');
+        }
+        return data;
+    },
+
+    async register(username, email, password, otp_code = '') {
         const response = await fetch(`${API_BASE}/api/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password, otp_code })
         });
         
         const data = await response.json();
@@ -155,9 +168,8 @@ const auth = {
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
-                <span style="font-weight: 600; color: var(--primary-dark);">Hi, ${user.username}! <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg></span>
-                <a href="/orders.html" style="font-weight: 600; color: var(--primary); margin-left: 12px; margin-right: 12px;">My Orders</a>
-                <button class="logout-btn" onclick="auth.logout()">Logout</button>
+                <a href="/profile.html" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${user.name || user.username}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+                <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;
             navLinks.appendChild(profileLi);
         } else {

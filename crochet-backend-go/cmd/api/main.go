@@ -113,15 +113,25 @@ func main() {
 		auth := api.Group("/auth")
 		{
 			auth.GET("/config", authHandler.GetAuthConfig)
+			auth.POST("/send-otp", authHandler.SendOTP)
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", loginLimit, authHandler.Login)
 			auth.POST("/google", authHandler.GoogleAuth)
 		}
 		
 		// Legacy auth aliases for frontend compatibility
+		api.POST("/send-otp", authHandler.SendOTP)
 		api.POST("/register", authHandler.Register)
 		api.POST("/login", loginLimit, authHandler.Login)
 		api.POST("/google", authHandler.GoogleAuth)
+
+		// User Profile Endpoints
+		userGroup := api.Group("/user")
+		userGroup.Use(middleware.AuthRequired())
+		{
+			userGroup.GET("/profile", authHandler.GetProfile)
+			userGroup.PUT("/profile", authHandler.UpdateProfile)
+		}
 
 		// Products Catalog Endpoints
 		products := api.Group("/products")
@@ -184,6 +194,7 @@ func main() {
 	r.StaticFile("/contact.html", filepath.Join(staticDir, "contact.html"))
 	r.StaticFile("/login.html", filepath.Join(staticDir, "login.html"))
 	r.StaticFile("/orders.html", filepath.Join(staticDir, "orders.html"))
+	r.StaticFile("/profile.html", filepath.Join(staticDir, "profile.html"))
 	r.StaticFile("/admin.html", filepath.Join(staticDir, "admin.html"))
 	r.StaticFile("/privacy.html", filepath.Join(staticDir, "privacy.html"))
 	r.StaticFile("/terms.html", filepath.Join(staticDir, "terms.html"))

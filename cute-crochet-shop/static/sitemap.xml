@@ -46,6 +46,14 @@
         <priority>0.6</priority>
     </url>
 
+    <!-- User Profile Dashboard -->
+    <url>
+        <loc>https://cutecrochet.shop/profile.html</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
     <!-- Privacy Policy -->
     <url>
         <loc>https://cutecrochet.shop/privacy.html</loc>
