@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"crochet-backend-go/internal/db"
 	"crochet-backend-go/internal/middleware"
@@ -155,3 +158,89 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Token:   token,
 	})
 }
+
+type GoogleAuthRequest struct {
+	Credential string `json:"credential" validate:"required"`
+}
+
+type GoogleTokenInfo struct {
+	Sub           string `json:"sub"`
+	Email         string `json:"email"`
+	EmailVerified string `json:"email_verified"`
+	Name          string `json:"name"`
+	Picture       string `json:"picture"`
+}
+
+// GoogleAuth verifies Google ID Tokens and logs in or creates user account automatically
+func (h *AuthHandler) GoogleAuth(c *gin.Context) {
+	var req GoogleAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Credential == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing Google credential token."})
+		return
+	}
+
+	// Verify ID Token with Google's tokeninfo OAuth2 verification service
+	googleInfoURL := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", req.Credential)
+	resp, err := http.Get(googleInfoURL)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to verify Google token credential with Google authentication servers."})
+		return
+	}
+	defer resp.Body.Close()
+
+	var tokenInfo GoogleTokenInfo
+	if err := json.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil || tokenInfo.Email == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google user identity payload."})
+		return
+	}
+
+	ctx := context.Background()
+
+	// 1. Check if user already exists by email
+	user, err := h.Queries.GetUserByEmail(ctx, tokenInfo.Email)
+	if err != nil {
+		// 2. User does not exist, create user account automatically from Google profile info
+		dummyHash, _ := bcrypt.GenerateFromPassword([]byte("oauth_google_"+tokenInfo.Sub), 12)
+		userName := tokenInfo.Name
+		if userName == "" {
+			userName = strings.Split(tokenInfo.Email, "@")[0]
+		}
+
+		user, err = h.Queries.CreateUser(ctx, db.CreateUserParams{
+			Name:         userName,
+			Email:        tokenInfo.Email,
+			PasswordHash: string(dummyHash),
+			Phone:        pgtype.Text{String: "", Valid: false},
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile from Google authentication."})
+			return
+		}
+	}
+
+	// 3. Issue application JWT Session Token
+	idUUID, _ := uuid.FromBytes(user.ID.Bytes[:])
+	token, err := middleware.GenerateJWT(idUUID.String())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authorization token."})
+		return
+	}
+
+	userPayload := UserPayload{
+		ID:       idUUID.String(),
+		Name:     user.Name,
+		Username: user.Name,
+		Email:    user.Email,
+		Phone:    "",
+	}
+	if user.Phone.Valid {
+		userPayload.Phone = user.Phone.String
+	}
+
+	c.JSON(http.StatusOK, AuthResponse{
+		Success: true,
+		User:    userPayload,
+		Token:   token,
+	})
+}
+

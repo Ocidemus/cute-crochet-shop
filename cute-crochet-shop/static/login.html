@@ -75,7 +75,23 @@
                         <input type="password" id="reg-confirm" name="confirm" placeholder="••••••••" required>
                     </div>
                     <button type="submit" class="btn-cute" style="width: 100%; text-align: center; margin-top: 10px;">Create Account <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg></button>
-                </form>
+            <!-- Google Auth Divider & Button -->
+            <div style="text-align: center; margin: 24px 0 12px; border-top: 2px dashed var(--stitch-color, #EAE0D5); padding-top: 20px;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">- OR SIGN IN WITH GOOGLE -</p>
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="pill"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left"
+                     style="display: flex; justify-content: center;">
+                </div>
             </div>
         </div>
     </main>
@@ -84,9 +100,10 @@
         <p>Handmade with <svg class="icon-inline footer-heart icon-filled" style="color: #FF5A79; vertical-align: middle;" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> by CuteCrochet Shop © 2026. Safe & Secure E-Commerce Checkout.</p>
     </footer>
 
-    <!-- Scripts -->
-    <script src="/js/auth.js?v=2.2"></script>
-    <script src="/js/app.js?v=2.2"></script>
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="/js/auth.js?v=3.0"></script>
+    <script src="/js/app.js?v=3.0"></script>
 
     <script>
         // Tab switching
@@ -177,6 +194,31 @@
                 errorEl.style.display = 'block';
             }
         });
+
+        // Google OAuth response handler
+        async function handleGoogleCredentialResponse(response) {
+            const errorEl = document.getElementById('auth-error');
+            const successEl = document.getElementById('auth-success');
+            if (errorEl) errorEl.style.display = 'none';
+            if (successEl) successEl.style.display = 'none';
+
+            try {
+                await window.auth.googleAuth(response.credential);
+                if (successEl) {
+                    successEl.textContent = "Google Sign-In successful! Redirecting... 🌸";
+                    successEl.style.display = 'block';
+                }
+                setTimeout(() => {
+                    window.location.href = redirect || 'index.html';
+                }, 800);
+            } catch (err) {
+                if (errorEl) {
+                    errorEl.textContent = err.message || "Google Authentication failed.";
+                    errorEl.style.display = 'block';
+                }
+            }
+        }
+        window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 
         // Redirect if already authenticated
         window.addEventListener('DOMContentLoaded', () => {

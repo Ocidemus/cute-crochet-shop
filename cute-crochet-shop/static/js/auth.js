@@ -75,6 +75,25 @@ const auth = {
         return data.user;
     },
 
+    async googleAuth(credential) {
+        const response = await fetch(`${API_BASE}/api/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential })
+        });
+        
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Google authentication failed');
+        }
+        
+        localStorage.setItem('crochet_auth_token', data.token);
+        localStorage.setItem('crochet_user_profile', JSON.stringify(data.user));
+        
+        await this.syncLocalCartToServer();
+        return data.user;
+    },
+
     logout() {
         localStorage.removeItem('crochet_auth_token');
         localStorage.removeItem('crochet_user_profile');

@@ -114,11 +114,13 @@ func main() {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", loginLimit, authHandler.Login)
+			auth.POST("/google", authHandler.GoogleAuth)
 		}
 		
 		// Legacy auth aliases for frontend compatibility
 		api.POST("/register", authHandler.Register)
 		api.POST("/login", loginLimit, authHandler.Login)
+		api.POST("/google", authHandler.GoogleAuth)
 
 		// Products Catalog Endpoints
 		products := api.Group("/products")
