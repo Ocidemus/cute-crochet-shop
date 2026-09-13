@@ -88,6 +88,27 @@ const auth = {
         return data.user;
     },
 
+    async deleteAccount() {
+        const token = this.getToken();
+        if (!token) throw new Error('No active session.');
+
+        const response = await fetch(`${API_BASE}/api/user/profile`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to delete account.');
+        }
+
+        this.logout();
+        return data;
+    },
+
     async getAuthConfig() {
         try {
             const response = await fetch(`${API_BASE}/api/auth/config`);

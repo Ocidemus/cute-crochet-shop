@@ -276,6 +276,32 @@ window.profile = {
                 </div>
             `;
         }
+    },
+
+    async confirmDeleteAccount() {
+        const confirmChoice = confirm("⚠️ Are you sure you want to permanently delete your CuteCrochet account?\n\nThis will erase your saved shipping addresses, order history, and account profile. This action cannot be undone!");
+        if (!confirmChoice) return;
+
+        const btn = document.getElementById('btn-delete-account');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Deleting...';
+        }
+
+        try {
+            await window.auth.deleteAccount();
+            alert("🌸 Your account has been permanently deleted. We're sad to see you go!");
+            window.location.href = '/login';
+        } catch (err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg class="icon-inline" style="stroke: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Delete Account
+                `;
+            }
+            alert(err.message || "Failed to delete account. Please try again.");
+        }
     }
 };
 

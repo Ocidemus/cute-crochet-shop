@@ -46,7 +46,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 	Phone    string `json:"phone" validate:"omitempty,min=7,max=20"`
-	OTPCode  string `json:"otp_code"`
+	OTPCode  string `json:"otp_code" validate:"required,len=6"`
 }
 
 type LoginRequest struct {
@@ -108,7 +108,7 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please fill out all required registration fields including the 6-digit email verification code."})
 		return
 	}
 
@@ -117,24 +117,35 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Verify OTP if provided or required
-	cleanEmail := strings.ToLower(req.Email)
-	if val, ok := otpStore.Load(cleanEmail); ok {
-		item := val.(OTPItem)
-		if time.Now().After(item.ExpiresAt) {
-			otpStore.Delete(cleanEmail)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Verification code has expired. Please request a new code."})
-			return
-		}
-		if req.OTPCode != item.Code {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid verification code. Please check your email."})
-			return
-		}
-		otpStore.Delete(cleanEmail)
-	} else if req.OTPCode != "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired verification code."})
+	// Require and strictly verify OTP code
+	cleanEmail := strings.ToLower(strings.TrimSpace(req.Email))
+	req.OTPCode = strings.TrimSpace(req.OTPCode)
+
+	if req.OTPCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email verification code (OTP) is required. Please click 'Get OTP' to verify your email address."})
 		return
 	}
+
+	val, ok := otpStore.Load(cleanEmail)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No verification code was sent to this email address. Please click 'Get OTP' first."})
+		return
+	}
+
+	item := val.(OTPItem)
+	if time.Now().After(item.ExpiresAt) {
+		otpStore.Delete(cleanEmail)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Verification code has expired. Please click 'Resend Code' to receive a new OTP."})
+		return
+	}
+
+	if req.OTPCode != item.Code {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid verification code. Please check your email inbox or spam folder."})
+		return
+	}
+
+	// Verification successful! Clean up OTP from store
+	otpStore.Delete(cleanEmail)
 
 	// Password Hashing
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
@@ -458,6 +469,59 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Profile updated successfully.",
+	})
+}
+
+// DeleteAccount handles permanent deletion of user account and associated data
+func (h *AuthHandler) DeleteAccount(c *gin.Context) {
+	userIdVal, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized session."})
+		return
+	}
+
+	userIdStr, ok := userIdVal.(string)
+	if !ok || userIdStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session identifier."})
+		return
+	}
+
+	userID, err := uuid.Parse(userIdStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format."})
+		return
+	}
+
+	ctx := context.Background()
+	tx, err := h.DB.Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate transaction for account removal."})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	// Clean up related order items, payments, shipments, orders & addresses
+	_, _ = tx.Exec(ctx, `DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)`, userID)
+	_, _ = tx.Exec(ctx, `DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)`, userID)
+	_, _ = tx.Exec(ctx, `DELETE FROM shipments WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)`, userID)
+	_, _ = tx.Exec(ctx, `DELETE FROM orders WHERE user_id = $1`, userID)
+	_, _ = tx.Exec(ctx, `DELETE FROM addresses WHERE user_id = $1`, userID)
+
+	// Delete user record
+	tag, err := tx.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+	if err != nil || tag.RowsAffected() == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user account."})
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit account deletion."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Your account and all associated data have been permanently deleted.",
 	})
 }
 

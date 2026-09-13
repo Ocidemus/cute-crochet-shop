@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"crochet-backend-go/internal/db"
@@ -104,6 +105,27 @@ func main() {
 		c.Next()
 	})
 
+	// Clean URL Redirection Middleware: automatically strips .html extensions and redirects to canonical clean URLs
+	r.Use(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if path != "/" && strings.HasSuffix(path, ".html") {
+			cleanPath := strings.TrimSuffix(path, ".html")
+			if cleanPath == "/index" {
+				cleanPath = "/"
+			} else if cleanPath == "/admin" {
+				cleanPath = "/dashboard"
+			}
+
+			if rawQuery := c.Request.URL.RawQuery; rawQuery != "" {
+				cleanPath += "?" + rawQuery
+			}
+			c.Redirect(http.StatusMovedPermanently, cleanPath)
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
+
 	// Rate Limit configuration definitions
 	loginLimit := middleware.RateLimit(15*time.Minute, 10, "Too many login attempts. Please try again after 15 minutes.")
 	orderLimit := middleware.RateLimit(5*time.Minute, 5, "Too many order attempts. Please try again in 5 minutes.")
@@ -136,6 +158,7 @@ func main() {
 		{
 			userGroup.GET("/profile", authHandler.GetProfile)
 			userGroup.PUT("/profile", authHandler.UpdateProfile)
+			userGroup.DELETE("/profile", authHandler.DeleteAccount)
 		}
 
 		// Products Catalog Endpoints
@@ -206,19 +229,6 @@ func main() {
 	r.StaticFile("/terms", filepath.Join(staticDir, "terms.html"))
 	r.StaticFile("/refund", filepath.Join(staticDir, "refund.html"))
 
-	// Backward compatibility fallback routes with .html extension
-	r.StaticFile("/index.html", filepath.Join(staticDir, "index.html"))
-	r.StaticFile("/about.html", filepath.Join(staticDir, "about.html"))
-	r.StaticFile("/cart.html", filepath.Join(staticDir, "cart.html"))
-	r.StaticFile("/checkout.html", filepath.Join(staticDir, "checkout.html"))
-	r.StaticFile("/contact.html", filepath.Join(staticDir, "contact.html"))
-	r.StaticFile("/login.html", filepath.Join(staticDir, "login.html"))
-	r.StaticFile("/orders.html", filepath.Join(staticDir, "orders.html"))
-	r.StaticFile("/profile.html", filepath.Join(staticDir, "profile.html"))
-	r.StaticFile("/admin.html", filepath.Join(staticDir, "admin.html"))
-	r.StaticFile("/privacy.html", filepath.Join(staticDir, "privacy.html"))
-	r.StaticFile("/terms.html", filepath.Join(staticDir, "terms.html"))
-	r.StaticFile("/refund.html", filepath.Join(staticDir, "refund.html"))
 	r.StaticFile("/sitemap.xml", filepath.Join(staticDir, "sitemap.xml"))
 	r.StaticFile("/robots.txt", filepath.Join(staticDir, "robots.txt"))
 
