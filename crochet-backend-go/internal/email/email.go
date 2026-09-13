@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"time"
 )
@@ -14,25 +14,17 @@ import (
 type EmailService struct {
 	ResendAPIKey string
 	SenderEmail  string
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUser     string
-	SMTPPass     string
 }
 
 func NewEmailService() *EmailService {
 	apiKey := os.Getenv("RESEND_API_KEY")
 	sender := os.Getenv("SENDER_EMAIL")
 	if sender == "" {
-		sender = "CuteCrochet Shop <craftingforyouofficial@gmail.com>"
+		sender = "CuteCrochet <noreply@craftingforyou.in>"
 	}
 	return &EmailService{
 		ResendAPIKey: apiKey,
 		SenderEmail:  sender,
-		SMTPHost:     os.Getenv("SMTP_HOST"),
-		SMTPPort:     os.Getenv("SMTP_PORT"),
-		SMTPUser:     os.Getenv("SMTP_USER"),
-		SMTPPass:     os.Getenv("SMTP_PASS"),
 	}
 }
 
@@ -125,29 +117,8 @@ func (e *EmailService) SendOrderConfirmation(toEmail, customerName, orderID stri
 		</html>
 	`, customerName, orderID, address, itemsHTML, totalAmount)
 
-	// Priority 1: SMTP Delivery if SMTP host is configured
-	if e.SMTPHost != "" {
-		port := e.SMTPPort
-		if port == "" {
-			port = "587"
-		}
-		addr := fmt.Sprintf("%s:%s", e.SMTPHost, port)
-		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPass, e.SMTPHost)
-
-		mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-		msg := []byte(fmt.Sprintf("From: %s\nTo: %s\nSubject: %s\n%s%s", e.SenderEmail, toEmail, subject, mime, htmlBody))
-
-		err := smtp.SendMail(addr, auth, e.SenderEmail, []string{toEmail}, msg)
-		if err != nil {
-			log.Printf("[ERROR] SMTP dispatch failed for %s: %v", toEmail, err)
-		} else {
-			log.Printf("🌸 [SUCCESS] Order confirmation email sent via SMTP to %s for order %s", toEmail, orderID)
-			return
-		}
-	}
-
-	// Priority 2: Resend API if API key is configured
-	if e.ResendAPIKey != "" {
+	apiKey := os.Getenv("RESEND_API_KEY")
+	if apiKey != "" {
 		reqPayload := ResendEmailRequest{
 			From:    e.SenderEmail,
 			To:      []string{toEmail},
@@ -157,40 +128,42 @@ func (e *EmailService) SendOrderConfirmation(toEmail, customerName, orderID stri
 
 		jsonBytes, err := json.Marshal(reqPayload)
 		if err != nil {
-			log.Printf("[ERROR] Failed to marshal confirmation email payload: %v", err)
+			log.Printf("[ERROR] Failed to marshal confirmation email payload for %s: %v", toEmail, err)
 			return
 		}
 
 		req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonBytes))
 		if err != nil {
-			log.Printf("[ERROR] Failed to create Resend email HTTP request: %v", err)
+			log.Printf("[ERROR] Failed to create Resend email request for %s: %v", toEmail, err)
 			return
 		}
 
-		req.Header.Set("Authorization", "Bearer "+e.ResendAPIKey)
+		req.Header.Set("Authorization", "Bearer "+apiKey)
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf("[ERROR] Failed to send email via Resend API: %v", err)
+			log.Printf("[ERROR] Resend API order email network failure for %s: %v", toEmail, err)
 			return
 		}
 		defer resp.Body.Close()
 
+		respBody, _ := io.ReadAll(resp.Body)
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			log.Printf("🌸 [SUCCESS] Order confirmation email dispatched via Resend to %s for order %s", toEmail, orderID)
 			return
 		} else {
-			log.Printf("[WARNING] Resend API returned status code %d for email to %s", resp.StatusCode, toEmail)
+			log.Printf("[ERROR] Resend API order email delivery failed for %s (Status %d): %s", toEmail, resp.StatusCode, string(respBody))
+			return
 		}
 	}
 
-	// Fallback logging mode when no email provider keys are set
-	log.Printf("🌸 [MOCK EMAIL DISPATCH] Order confirmation email prepared for %s (Order #%s, Amount ₹%.2f). Configure SMTP_HOST or RESEND_API_KEY in .env for live email delivery.", toEmail, orderID, totalAmount)
+	// Fallback logging mode when RESEND_API_KEY is not configured
+	log.Printf("🌸 [MOCK EMAIL DISPATCH] Order confirmation email prepared for %s (Order #%s, Amount ₹%.2f). Set RESEND_API_KEY in .env for live email delivery.", toEmail, orderID, totalAmount)
 }
 
-// SendOTPEmail dispatches a 6-digit verification code to a user during registration/verification
+// SendOTPEmail dispatches a 6-digit verification code to a user via Resend API
 func (e *EmailService) SendOTPEmail(toEmail, otpCode string) {
 	if toEmail == "" {
 		log.Printf("[INFO] Cannot send OTP: recipient email is empty")
@@ -227,27 +200,8 @@ func (e *EmailService) SendOTPEmail(toEmail, otpCode string) {
 		</html>
 	`, otpCode)
 
-	if e.SMTPHost != "" {
-		port := e.SMTPPort
-		if port == "" {
-			port = "587"
-		}
-		addr := fmt.Sprintf("%s:%s", e.SMTPHost, port)
-		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPass, e.SMTPHost)
-
-		mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-		msg := []byte(fmt.Sprintf("From: %s\nTo: %s\nSubject: %s\n%s%s", e.SenderEmail, toEmail, subject, mime, htmlBody))
-
-		err := smtp.SendMail(addr, auth, e.SenderEmail, []string{toEmail}, msg)
-		if err != nil {
-			log.Printf("[ERROR] SMTP OTP dispatch failed for %s: %v", toEmail, err)
-		} else {
-			log.Printf("🔒 [SUCCESS] OTP email sent via SMTP to %s", toEmail)
-			return
-		}
-	}
-
-	if e.ResendAPIKey != "" {
+	apiKey := os.Getenv("RESEND_API_KEY")
+	if apiKey != "" {
 		reqPayload := ResendEmailRequest{
 			From:    e.SenderEmail,
 			To:      []string{toEmail},
@@ -256,24 +210,39 @@ func (e *EmailService) SendOTPEmail(toEmail, otpCode string) {
 		}
 
 		jsonBytes, err := json.Marshal(reqPayload)
-		if err == nil {
-			req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonBytes))
-			if err == nil {
-				req.Header.Set("Authorization", "Bearer "+e.ResendAPIKey)
-				req.Header.Set("Content-Type", "application/json")
-				client := &http.Client{Timeout: 10 * time.Second}
-				resp, err := client.Do(req)
-				if err == nil {
-					defer resp.Body.Close()
-					if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-						log.Printf("🔒 [SUCCESS] OTP email dispatched via Resend to %s", toEmail)
-						return
-					}
-				}
-			}
+		if err != nil {
+			log.Printf("[ERROR] Failed to marshal OTP email payload for %s: %v", toEmail, err)
+			return
+		}
+
+		req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonBytes))
+		if err != nil {
+			log.Printf("[ERROR] Failed to create Resend OTP email request for %s: %v", toEmail, err)
+			return
+		}
+
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[ERROR] Resend API OTP network failure for %s: %v", toEmail, err)
+			return
+		}
+		defer resp.Body.Close()
+
+		respBody, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			log.Printf("🔒 [SUCCESS] OTP email dispatched via Resend to %s", toEmail)
+			return
+		} else {
+			log.Printf("[ERROR] Resend API OTP email delivery failed for %s (Status %d): %s", toEmail, resp.StatusCode, string(respBody))
+			return
 		}
 	}
 
-	log.Printf("🔒 [MOCK OTP DISPATCH] Verification code [%s] generated for %s. (Valid for 10 minutes)", otpCode, toEmail)
+	// Fallback logging mode when RESEND_API_KEY is not configured
+	log.Printf("🔒 [MOCK OTP DISPATCH] Verification code [%s] generated for %s. (Valid for 10 minutes). Set RESEND_API_KEY in .env for live email delivery.", otpCode, toEmail)
 }
 

@@ -209,10 +209,10 @@ func main() {
 		staticDir = "../cute-crochet-shop/static"
 	}
 
-	// Serve static frontend assets & clean URL page routes
-	r.Static("/assets", filepath.Join(staticDir, "assets"))
-	r.Static("/css", filepath.Join(staticDir, "css"))
-	r.Static("/js", filepath.Join(staticDir, "js"))
+	// Serve static frontend assets with directory listing disabled
+	r.StaticFS("/assets", NoDirListingFileSystem{fs: http.Dir(filepath.Join(staticDir, "assets"))})
+	r.StaticFS("/css", NoDirListingFileSystem{fs: http.Dir(filepath.Join(staticDir, "css"))})
+	r.StaticFS("/js", NoDirListingFileSystem{fs: http.Dir(filepath.Join(staticDir, "js"))})
 
 	// Clean, extensionless page routes (SEO-friendly & architecture-obfuscated)
 	r.StaticFile("/", filepath.Join(staticDir, "index.html"))
@@ -232,9 +232,54 @@ func main() {
 	r.StaticFile("/sitemap.xml", filepath.Join(staticDir, "sitemap.xml"))
 	r.StaticFile("/robots.txt", filepath.Join(staticDir, "robots.txt"))
 
+	// Custom 404 Handler for undefined page or API routes
+	r.NoRoute(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":  "API route not found.",
+				"status": 404,
+			})
+			return
+		}
+
+		page404Path := filepath.Join(staticDir, "404.html")
+		htmlBytes, err := os.ReadFile(page404Path)
+		if err != nil {
+			c.String(http.StatusNotFound, "404 - Page Not Found")
+			return
+		}
+
+		c.Data(http.StatusNotFound, "text/html; charset=utf-8", htmlBytes)
+	})
+
 	// Start Gin Server
 	log.Printf("Go Crochet Backend running on port %s...", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to run HTTP server: %v", err)
 	}
+}
+
+// NoDirListingFileSystem wraps http.FileSystem to disable directory browsing indexes
+type NoDirListingFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs NoDirListingFileSystem) Open(name string) (http.File, error) {
+	f, err := nfs.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+
+	if stat.IsDir() {
+		f.Close()
+		return nil, os.ErrNotExist
+	}
+
+	return f, nil
 }
