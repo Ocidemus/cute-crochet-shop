@@ -5,7 +5,7 @@
 window.profile = {
     async init() {
         if (!window.auth || !window.auth.isAuthenticated()) {
-            window.location.href = 'login.html?redirect=profile.html';
+            window.location.href = '/login?redirect=profile';
             return;
         }
 
@@ -140,7 +140,7 @@ window.profile = {
                 </div>
             `;
             actionArea.innerHTML = `
-                <a href="index.html" class="btn-cute btn-secondary" style="width: 100%; text-align: center; text-decoration: none;">Explore Shop Catalog</a>
+                <a href="/" class="btn-cute btn-secondary" style="width: 100%; text-align: center; text-decoration: none;">Explore Shop Catalog</a>
             `;
             return;
         }
@@ -176,7 +176,7 @@ window.profile = {
                 <span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">Basket Total:</span>
                 <span style="font-size: 20px; font-weight: 800; color: var(--primary-dark);">₹${total.toFixed(2)}</span>
             </div>
-            <a href="checkout.html" class="btn-cute" style="width: 100%; text-align: center; text-decoration: none;">Proceed to Checkout &rarr;</a>
+            <a href="/checkout" class="btn-cute" style="width: 100%; text-align: center; text-decoration: none;">Proceed to Checkout &rarr;</a>
         `;
     },
 
@@ -208,7 +208,7 @@ window.profile = {
                         <p style="font-size: 36px; margin-bottom: 8px;">📦</p>
                         <p style="font-size: 16px; font-weight: 700; color: var(--primary-dark);">No past orders found yet</p>
                         <p style="font-size: 13px;">When you place an order, your receipts and downloadable PDF invoices will appear here!</p>
-                        <a href="index.html" class="btn-cute btn-secondary" style="display: inline-block; margin-top: 15px; text-decoration: none;">Browse Shop Catalog</a>
+                        <a href="/" class="btn-cute btn-secondary" style="display: inline-block; margin-top: 15px; text-decoration: none;">Browse Shop Catalog</a>
                     </div>
                 `;
                 return;

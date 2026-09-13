@@ -66,7 +66,7 @@ func main() {
 
 	// 3. Instantiate Resource Handlers
 	authHandler := &handlers.AuthHandler{Queries: *queries, DB: dbPool}
-	productsHandler := &handlers.ProductsHandler{Queries: *queries}
+	productsHandler := &handlers.ProductsHandler{Queries: *queries, DB: dbPool}
 	ordersHandler := &handlers.OrdersHandler{Queries: *queries, DB: dbPool}
 	webhooksHandler := &handlers.WebhooksHandler{Queries: *queries, DB: dbPool}
 	adminHandler := &handlers.AdminHandler{Queries: *queries, DB: dbPool}
@@ -186,12 +186,27 @@ func main() {
 		staticDir = "../cute-crochet-shop/static"
 	}
 
-	// Serve static frontend assets & individual HTML files directly
+	// Serve static frontend assets & clean URL page routes
 	r.Static("/assets", filepath.Join(staticDir, "assets"))
 	r.Static("/css", filepath.Join(staticDir, "css"))
 	r.Static("/js", filepath.Join(staticDir, "js"))
 
+	// Clean, extensionless page routes (SEO-friendly & architecture-obfuscated)
 	r.StaticFile("/", filepath.Join(staticDir, "index.html"))
+	r.StaticFile("/about", filepath.Join(staticDir, "about.html"))
+	r.StaticFile("/cart", filepath.Join(staticDir, "cart.html"))
+	r.StaticFile("/checkout", filepath.Join(staticDir, "checkout.html"))
+	r.StaticFile("/contact", filepath.Join(staticDir, "contact.html"))
+	r.StaticFile("/login", filepath.Join(staticDir, "login.html"))
+	r.StaticFile("/orders", filepath.Join(staticDir, "orders.html"))
+	r.StaticFile("/profile", filepath.Join(staticDir, "profile.html"))
+	r.StaticFile("/dashboard", filepath.Join(staticDir, "admin.html"))
+	r.StaticFile("/portal", filepath.Join(staticDir, "admin.html"))
+	r.StaticFile("/privacy", filepath.Join(staticDir, "privacy.html"))
+	r.StaticFile("/terms", filepath.Join(staticDir, "terms.html"))
+	r.StaticFile("/refund", filepath.Join(staticDir, "refund.html"))
+
+	// Backward compatibility fallback routes with .html extension
 	r.StaticFile("/index.html", filepath.Join(staticDir, "index.html"))
 	r.StaticFile("/about.html", filepath.Join(staticDir, "about.html"))
 	r.StaticFile("/cart.html", filepath.Join(staticDir, "cart.html"))

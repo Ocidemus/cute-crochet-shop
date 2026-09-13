@@ -624,7 +624,7 @@ const app = {
                     <div class="cart-lock-icon" style="color: var(--primary);"><svg class="icon-inline" style="width: 50px; height: 50px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <svg class="icon-inline" style="width: 50px; height: 50px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg></div>
                     <h2>Secure Login Required</h2>
                     <p>To view your cart items, edit details, or proceed to checkout, you must log in securely. Setting up an account takes less than a minute!</p>
-                    <a href="/login.html?redirect=cart.html" class="btn-cute">Sign In / Register <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>
+                    <a href="/login?redirect=cart" class="btn-cute">Sign In / Register <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>
                 </div>
             `;
             return;
@@ -636,7 +636,7 @@ const app = {
                     <div class="cart-lock-icon" style="color: var(--primary);"><svg class="icon-inline" style="width: 60px; height: 60px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="20" r="1.5" class="icon-filled"/><circle cx="18" cy="20" r="1.5" class="icon-filled"/><path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/></svg></div>
                     <h2>Your basket is empty!</h2>
                     <p>Go look at some cute plushies and add them to your cart. They are waiting for a loving home!</p>
-                    <a href="/index.html" class="btn-cute">Browse Products <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></a>
+                    <a href="/" class="btn-cute">Browse Products <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></a>
                 </div>
             `;
             return;
@@ -696,7 +696,7 @@ const app = {
                         <span>Total:</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
-                    <a href="/checkout.html" class="btn-cute" style="width: 100%; text-align: center; margin-top: 25px;">Proceed to Checkout <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>
+                    <a href="/checkout" class="btn-cute" style="width: 100%; text-align: center; margin-top: 25px;">Proceed to Checkout <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>
                 </div>
             </div>
         `;

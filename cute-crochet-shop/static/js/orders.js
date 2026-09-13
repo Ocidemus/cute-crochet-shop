@@ -4,7 +4,7 @@ const ordersPage = {
 
     async init() {
         if (!window.auth || !window.auth.isAuthenticated()) {
-            window.location.href = '/login.html?redirect=orders.html';
+            window.location.href = '/login?redirect=orders';
             return;
         }
 

@@ -8,10 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProductsHandler struct {
 	Queries db.Queries
+	DB      *pgxpool.Pool
 }
 
 type ProductWithVariants struct {
@@ -28,16 +30,33 @@ func (h *ProductsHandler) ListProducts(c *gin.Context) {
 		return
 	}
 
+	// Batch query all variants in 1 round trip instead of N+1 sequential database round trips
+	variantsMap := make(map[[16]byte][]db.ProductVariants)
+	if h.DB != nil {
+		rows, err := h.DB.Query(ctx, "SELECT id, product_id, variant_name, stock_quantity, sku, created_at FROM product_variants ORDER BY variant_name ASC")
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var v db.ProductVariants
+				if err := rows.Scan(&v.ID, &v.ProductID, &v.VariantName, &v.StockQuantity, &v.Sku, &v.CreatedAt); err == nil {
+					pID := v.ProductID.Bytes
+					variantsMap[pID] = append(variantsMap[pID], v)
+				}
+			}
+		}
+	}
+
 	var results []ProductWithVariants
 	for _, p := range products {
-		variants, err := h.Queries.GetVariantsByProductID(ctx, p.ID)
-		if err != nil {
-			variants = []db.ProductVariants{}
+		pID := p.ID.Bytes
+		vars, exists := variantsMap[pID]
+		if !exists || vars == nil {
+			vars = []db.ProductVariants{}
 		}
 
 		results = append(results, ProductWithVariants{
 			Products: p,
-			Variants: variants,
+			Variants: vars,
 		})
 	}
 

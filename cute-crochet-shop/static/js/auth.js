@@ -122,7 +122,7 @@ const auth = {
     logout() {
         localStorage.removeItem('crochet_auth_token');
         localStorage.removeItem('crochet_user_profile');
-        window.location.href = '/index.html';
+        window.location.href = '/';
     },
 
     async syncLocalCartToServer() {
@@ -168,7 +168,7 @@ const auth = {
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
-                <a href="/profile.html" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${user.name || user.username}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${user.name || user.username}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
                 <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;
             navLinks.appendChild(profileLi);
@@ -176,7 +176,7 @@ const auth = {
             // Login link
             const loginLi = document.createElement('li');
             loginLi.className = 'dynamic-auth';
-            loginLi.innerHTML = `<a href="/login.html">Login / Register <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>`;
+            loginLi.innerHTML = `<a href="/login">Login / Register <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>`;
             navLinks.appendChild(loginLi);
         }
     }

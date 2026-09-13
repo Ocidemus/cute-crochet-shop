@@ -8,7 +8,7 @@ const checkout = {
 
     async init() {
         if (!window.auth || !window.auth.isAuthenticated()) {
-            window.location.href = '/login.html?redirect=checkout.html';
+            window.location.href = '/login?redirect=checkout';
             return;
         }
 
@@ -79,7 +79,7 @@ const checkout = {
         if (!orderSummaryDiv) return;
 
         if (this.cart.length === 0) {
-            window.location.href = '/cart.html';
+            window.location.href = '/cart';
             return;
         }
 
@@ -364,7 +364,7 @@ const checkout = {
                             <button type="button" class="btn-cute btn-secondary" onclick="window.print()" style="padding: 10px 20px;">
                                 Download / Print Invoice (PDF) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             </button>
-                            <a href="profile.html" class="btn-cute" style="padding: 10px 20px; text-decoration: none;">View My Account & Orders &rarr;</a>
+                            <a href="/profile" class="btn-cute" style="padding: 10px 20px; text-decoration: none;">View My Account & Orders &rarr;</a>
                         </div>
                     </div>
                 `;
