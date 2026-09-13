@@ -72,7 +72,7 @@ func main() {
 	adminHandler := &handlers.AdminHandler{Queries: *queries, DB: dbPool}
 	addressesHandler := &handlers.AddressesHandler{Queries: *queries, DB: dbPool}
 
-	contactHandler := &handlers.ContactHandler{}
+	contactHandler := &handlers.ContactHandler{Queries: *queries, DB: dbPool}
 
 	// 4. Initialize Gin Framework
 	if os.Getenv("NODE_ENV") == "production" {

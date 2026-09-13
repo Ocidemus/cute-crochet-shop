@@ -82,7 +82,10 @@
                 </div>
                 <div class="form-group">
                     <label for="contact-email">Email Address <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m2 7 8.2 5.5a3 3 0 0 0 3.6 0L22 7"/></svg></label>
-                    <input type="email" id="contact-email" name="email" placeholder="hello@cutecompanion.com" required>
+                    <input type="email" id="contact-email" name="email" placeholder="hello@cutecompanion.com" required pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Please enter a valid email address (e.g. name@domain.com)">
+                    <div id="contact-email-status" style="margin-top: 6px; font-size: 12px; color: #7A656C; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-weight: 500;">🔒 Only validated, registered account emails can send support inquiries.</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="contact-message">What would you like to say? <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></label>

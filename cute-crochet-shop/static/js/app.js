@@ -707,18 +707,44 @@ const app = {
         
         const form = e.target;
         const name = form.name.value.trim();
-        const email = form.email.value.trim();
+        const email = form.email.value.trim().toLowerCase();
         const message = form.message.value.trim();
         
         const errorEl = document.getElementById('contact-error');
         const successEl = document.getElementById('contact-success');
         const msgTextarea = document.getElementById('contact-message');
+        const emailInput = document.getElementById('contact-email');
         
         if (errorEl) errorEl.style.display = 'none';
         if (successEl) successEl.style.display = 'none';
         if (msgTextarea) {
             msgTextarea.style.border = '';
             msgTextarea.style.backgroundColor = '';
+        }
+        if (emailInput) {
+            emailInput.style.border = '';
+            emailInput.style.backgroundColor = '';
+        }
+
+        // Email format & disposable domain validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const disposableRegex = /@(test|example|invalid|disposable|mailinator|tempmail|10minutemail|guerrillamail)\./i;
+
+        if (!emailRegex.test(email) || disposableRegex.test(email)) {
+            if (errorEl) {
+                errorEl.innerHTML = `
+                    <div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px;">
+                        <svg class="icon-inline" style="width: 20px; height: 20px; stroke: #D32F2F; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style="color: #5A3A40; font-size: 13px; font-weight: 600;">Please provide a valid, active email address (e.g., yourname@domain.com).</span>
+                    </div>
+                `;
+                errorEl.style.display = 'block';
+            }
+            if (emailInput) {
+                emailInput.style.border = '2px solid #FF8DA1';
+                emailInput.style.backgroundColor = '#FFF5F7';
+            }
+            return;
         }
 
         // Profanity filter regex
@@ -755,7 +781,12 @@ const app = {
                 form.reset();
             } else {
                 if (errorEl) {
-                    errorEl.textContent = data.error || "Failed to send message.";
+                    errorEl.innerHTML = `
+                        <div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px;">
+                            <svg class="icon-inline" style="width: 20px; height: 20px; stroke: #D32F2F; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span style="color: #5A3A40; font-size: 13px; font-weight: 600;">${data.error || "Failed to send message."}</span>
+                        </div>
+                    `;
                     errorEl.style.display = 'block';
                 }
             }
@@ -765,6 +796,41 @@ const app = {
                 errorEl.style.display = 'block';
             }
         }
+    },
+
+    initContactForm() {
+        const contactForm = document.getElementById('contact-form');
+        if (!contactForm) return;
+
+        const currentUser = (window.auth && typeof window.auth.getUser === 'function') ? window.auth.getUser() : null;
+        const nameInput = document.getElementById('contact-name');
+        const emailInput = document.getElementById('contact-email');
+        const emailStatus = document.getElementById('contact-email-status');
+
+        if (currentUser && currentUser.email) {
+            if (nameInput && currentUser.name) nameInput.value = currentUser.name;
+            if (emailInput) {
+                emailInput.value = currentUser.email;
+                emailInput.readOnly = true;
+                emailInput.style.backgroundColor = '#F7F4F6';
+                emailInput.style.borderColor = '#A5D6A7';
+            }
+            if (emailStatus) {
+                emailStatus.innerHTML = `
+                    <span style="color: #2E7D32; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                        ✓ Validated Account Email (${currentUser.email})
+                    </span>
+                `;
+            }
+        } else {
+            if (emailStatus) {
+                emailStatus.innerHTML = `
+                    <span style="font-weight: 500; color: #7A656C;">🔒 Only validated, registered account emails can send support inquiries.</span>
+                `;
+            }
+        }
+
+        contactForm.addEventListener('submit', this.handleContactSubmit);
     },
 
     setupEventListeners() {
@@ -790,11 +856,7 @@ const app = {
             }
         });
         
-        const contactForm = document.getElementById('contact-form');
-        if (contactForm) {
-            contactForm.addEventListener('submit', this.handleContactSubmit);
-        }
-        
+        this.initContactForm();
         this.setupHotspots();
     }
 };
