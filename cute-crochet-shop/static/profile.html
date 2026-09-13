@@ -50,9 +50,13 @@
                     <p style="font-size: 14px; color: var(--text-muted); margin: 0;" id="profile-user-email">Loading user details...</p>
                 </div>
             </div>
-            <div>
-                <button type="button" class="btn-cute btn-secondary" onclick="app.logout()" style="padding: 10px 20px; font-size: 14px;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-cute btn-secondary" onclick="app.logout()" style="padding: 10px 18px; font-size: 14px;">
                     Log Out <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+                <button type="button" onclick="profile.confirmDeleteAccount()" style="background: #FFF0F2; color: #D32F2F; border: 1.5px solid #FF8DA1; padding: 10px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;" title="Permanently delete account">
+                    <svg class="icon-inline" style="stroke: #D32F2F;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Delete Account
                 </button>
             </div>
         </div>
@@ -136,6 +140,9 @@
                     <svg class="yarn-loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0-9 9M21 12a9 9 0 0 0-9 9M12 3a9 9 0 0 1 9 9M3 12a9 9 0 0 1 9 9M9 6c0 3.3 2.7 6 6 6M15 18c0-3.3-2.7-6-6-6"/></svg>
                     <p style="font-size: 14px; color: var(--text-muted); margin-top: 10px;">Fetching your orders...</p>
                 </div>
+            </div>
+        </div>
+
         <!-- Danger Zone: Account Deletion -->
         <div class="cute-card" style="padding: 24px 30px; background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 16px; margin-top: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
