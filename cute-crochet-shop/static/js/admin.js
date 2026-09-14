@@ -13,7 +13,7 @@ const adminPortal = {
             }
             
             const user = window.auth.getUser();
-            if (user.email !== 'craftingforyouofficial@gmail.com') {
+            if (user.email.toLowerCase() !== 'craftingforyouofficial@gmail.com') {
                 const errorDiv = document.getElementById('auth-error-msg');
                 errorDiv.innerText = 'Access denied. You must log in with craftingforyouofficial@gmail.com';
                 errorDiv.style.display = 'block';

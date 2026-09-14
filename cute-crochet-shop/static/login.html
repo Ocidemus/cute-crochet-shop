@@ -76,7 +76,7 @@
                 <form id="form-register">
                     <div class="form-group">
                         <label for="reg-username">Username <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></label>
-                        <input type="text" id="reg-username" name="username" placeholder="crochet_lover" required>
+                        <input type="text" id="reg-username" name="username" placeholder="crochet_lover" maxlength="15" required>
                     </div>
                     <div class="form-group">
                         <label for="reg-email">Email Address <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m2 7 8.2 5.5a3 3 0 0 0 3.6 0L22 7"/></svg></label>
@@ -304,8 +304,8 @@
                 return;
             }
 
-            if (password.length < 6) {
-                errorEl.textContent = "Password must be at least 6 characters long.";
+            if (password.length < 6 || !/\d/.test(password) || !/[A-Z]/.test(password)) {
+                errorEl.textContent = "Password must be at least 6 characters, contain 1 number and 1 capital letter.";
                 errorEl.style.display = 'block';
                 return;
             }

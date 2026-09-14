@@ -48,7 +48,7 @@ type SendOTPRequest struct {
 }
 
 type RegisterRequest struct {
-	Name     string `json:"username" validate:"required,min=2,max=100"`
+	Name     string `json:"username" validate:"required,min=2,max=15"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 	Phone    string `json:"phone" validate:"omitempty,min=7,max=20"`
@@ -145,6 +145,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	if err := validate.Struct(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Strong password validation
+	hasNumber := false
+	hasUpper := false
+	for _, char := range req.Password {
+		if char >= '0' && char <= '9' {
+			hasNumber = true
+		}
+		if char >= 'A' && char <= 'Z' {
+			hasUpper = true
+		}
+	}
+	if !hasNumber || !hasUpper {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must contain at least 1 number and 1 uppercase letter."})
 		return
 	}
 

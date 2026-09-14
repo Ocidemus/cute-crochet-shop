@@ -29,12 +29,36 @@ type CreateShipmentRequest struct {
 	TrackingNumber string `json:"trackingNumber" validate:"required,min=3"`
 }
 
-// AdminAuth limits routes to admin users by checking the JWT email
-func AdminAuth() gin.HandlerFunc {
+// AdminAuth limits routes to admin users by checking the database for the official email
+func (h *AdminHandler) AdminAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		email := c.GetString("email")
+		userIdVal, exists := c.Get("userId")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized session."})
+			c.Abort()
+			return
+		}
 		
-		if email != "craftingforyouofficial@gmail.com" {
+		userIdStr := userIdVal.(string)
+		userID, err := uuid.Parse(userIdStr)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session."})
+			c.Abort()
+			return
+		}
+
+		var pgUserID pgtype.UUID
+		pgUserID.Bytes = userID
+		pgUserID.Valid = true
+
+		user, err := h.Queries.GetUserByID(context.Background(), pgUserID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found."})
+			c.Abort()
+			return
+		}
+		
+		if user.Email != "craftingforyouofficial@gmail.com" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Only the store owner can access the admin portal."})
 			c.Abort()
 			return

@@ -186,10 +186,14 @@ const auth = {
         
         if (isAuthenticated && user) {
             // Logged in user profile & logout
+            let displayName = user.name || user.username || 'User';
+            if (displayName.length > 12) {
+                displayName = displayName.substring(0, 12) + '...';
+            }
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
-                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${user.name || user.username}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${displayName}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
                 <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;
             navLinks.appendChild(profileLi);

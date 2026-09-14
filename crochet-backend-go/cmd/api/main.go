@@ -197,7 +197,7 @@ func main() {
 
 		// Admin Endpoints
 		admin := api.Group("/admin")
-		admin.Use(middleware.AuthRequired(), handlers.AdminAuth())
+		admin.Use(middleware.AuthRequired(), adminHandler.AdminAuth())
 		{
 			admin.GET("/orders", adminHandler.ListAllOrders)
 			admin.POST("/shipments", adminHandler.AttachShipment)
@@ -228,6 +228,7 @@ func main() {
 	r.StaticFile("/profile", filepath.Join(staticDir, "profile.html"))
 	r.StaticFile("/dashboard", filepath.Join(staticDir, "admin.html"))
 	r.StaticFile("/portal", filepath.Join(staticDir, "admin.html"))
+	r.StaticFile("/admin", filepath.Join(staticDir, "admin.html"))
 	r.StaticFile("/privacy", filepath.Join(staticDir, "privacy.html"))
 	r.StaticFile("/terms", filepath.Join(staticDir, "terms.html"))
 	r.StaticFile("/refund", filepath.Join(staticDir, "refund.html"))
