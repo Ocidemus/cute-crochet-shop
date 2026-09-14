@@ -1,6 +1,14 @@
 // Core Shop Logic for Cute Crochet Shop
 
 const PRODUCTS = {
+    'custom-design': {
+        id: 'custom-design',
+        name: 'Request Custom Design',
+        description: 'Have a specific design in mind? Let us know and we will craft it for you! We will contact you once the design is approved.',
+        price: 0,
+        images: ['/assets/images/placeholder.jpg'],
+        hasOptions: false
+    },
     'bears': {
         id: 'bears',
         name: 'Handcrafted Crochet Bears',
@@ -112,8 +120,9 @@ const PRODUCTS = {
 const app = {
     cart: [],
 
-    init() {
+    async init() {
         this.loadCart();
+        await this.fetchDynamicProducts();
         this.renderProductGrid();
         this.setupEventListeners();
         this.updateCartBadge();
@@ -245,12 +254,41 @@ const app = {
         
         localStorage.setItem('crochet_local_cart', JSON.stringify(this.cart));
         this.updateCartBadge();
+        await this.fetchDynamicProducts();
         
-        if (window.location.pathname.endsWith('cart.html') || window.location.pathname.endsWith('cart')) {
+        if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) {
+            this.renderProductGrid();
+        } else if (window.location.pathname.endsWith('cart.html') || window.location.pathname.endsWith('cart')) {
             this.renderCartPage();
         }
         if (window.profile && typeof window.profile.loadCartPreview === 'function') {
             window.profile.loadCartPreview();
+            window.dispatchEvent(new Event('cartUpdated'));
+        }
+    },
+
+    async fetchDynamicProducts() {
+        try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            if (res.ok && data.success) {
+                data.products.forEach(p => {
+                    const prod = p.Products || p;
+                    // Skip if it's already in the hardcoded list to preserve custom logic
+                    if (!PRODUCTS[prod.slug]) {
+                        PRODUCTS[prod.slug] = {
+                            id: prod.slug,
+                            name: prod.name,
+                            description: prod.description,
+                            price: parseFloat(prod.price),
+                            images: prod.images && prod.images.length > 0 ? prod.images : ['/assets/images/placeholder.jpg'],
+                            hasOptions: false
+                        };
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Failed to fetch dynamic products:', err);
         }
     },
 
@@ -278,6 +316,10 @@ const app = {
         const selectedOpt = packSelect.options[packSelect.selectedIndex];
         const price = parseFloat(selectedOpt.dataset.price || prod.price);
         priceSpan.textContent = `₹${price.toFixed(2)}`;
+        
+        if (this.updateCardActionUI) {
+            this.updateCardActionUI(prodId);
+        }
     },
 
     addToCart(productId, quantity = 1) {
@@ -298,19 +340,10 @@ const app = {
         this.showToast(`Added ${quantity}x ${resolved.name} to your cart!`);
     },
 
-    cardQuantities: {},
+    updateCardActionUI(prodId) {
+        const actionGroup = document.getElementById(`action-group-${prodId}`);
+        if (!actionGroup) return;
 
-    changeCardQty(prodId, delta) {
-        if (!this.cardQuantities[prodId]) {
-            this.cardQuantities[prodId] = 1;
-        }
-        this.cardQuantities[prodId] = Math.max(1, this.cardQuantities[prodId] + delta);
-        const qtyEl = document.getElementById(`qty-${prodId}`);
-        if (qtyEl) {
-            qtyEl.textContent = this.cardQuantities[prodId];
-        }
-
-        // If item is already in cart, update cart item quantity directly to match stepper
         let finalProductId = prodId;
         const prodObj = PRODUCTS[prodId];
         if (prodObj && prodObj.hasOptions) {
@@ -321,27 +354,32 @@ const app = {
             finalProductId = `${prodId}-${packVal}-${colorVal}`;
         }
 
-        const existingIdx = this.cart.findIndex(i => i.product_id === finalProductId);
-        if (existingIdx > -1) {
-            this.saveCartItem(finalProductId, this.cardQuantities[prodId], true);
-        }
-    },
-
-    addToCartWithQty(productId) {
-        const qty = this.cardQuantities[productId] || 1;
-        let finalProductId = productId;
-        const prodObj = PRODUCTS[productId];
-        if (prodObj && prodObj.hasOptions) {
-            const packSelect = document.getElementById(`pack-${productId}`);
-            const colorSelect = document.getElementById(`color-${productId}`);
-            const packVal = packSelect ? packSelect.value : 'single';
-            const colorVal = colorSelect ? colorSelect.value : 'brown';
-            finalProductId = `${productId}-${packVal}-${colorVal}`;
+        const cartItem = this.cart.find(i => i.product_id === finalProductId);
+        
+        if (prodId === 'custom-design') {
+            actionGroup.innerHTML = `
+                <button class="btn-cute" style="border-radius: 8px; padding: 8px 16px; font-weight: bold; width: 100%; justify-content: center;" onclick="window.location.href='/contact?subject=Custom%20Design%20Request'">
+                    Request Design
+                </button>
+            `;
+            return;
         }
 
-        this.saveCartItem(finalProductId, qty, true);
-        const resolved = this.getProduct(finalProductId);
-        this.showToast(`Cart updated: ${qty}x ${resolved.name}!`);
+        if (cartItem && cartItem.quantity > 0) {
+            actionGroup.innerHTML = `
+                <div class="card-qty-stepper">
+                    <button type="button" class="card-qty-btn" onclick="app.saveCartItem('${finalProductId}', ${cartItem.quantity - 1}, true); app.updateCardActionUI('${prodId}')" title="Decrease Quantity">-</button>
+                    <span class="card-qty-val">${cartItem.quantity}</span>
+                    <button type="button" class="card-qty-btn" onclick="app.saveCartItem('${finalProductId}', ${cartItem.quantity + 1}, true); app.updateCardActionUI('${prodId}')" title="Increase Quantity">+</button>
+                </div>
+            `;
+        } else {
+            actionGroup.innerHTML = `
+                <button class="btn-add-cart" style="border-radius: 8px; padding: 8px 16px; font-weight: bold;" title="Add to Basket" onclick="app.saveCartItem('${finalProductId}', 1, false); app.updateCardActionUI('${prodId}'); app.showToast('Added to your cart!')">
+                    Buy
+                </button>
+            `;
+        }
     },
 
     showToast(message) {
@@ -394,7 +432,7 @@ const app = {
                         </div>
                         <div class="option-row">
                             <label for="color-${prod.id}" class="option-label"><svg class="icon-inline" style="width: 16px; height: 16px; margin-right: 6px; stroke: #B25866; fill: none;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><circle cx="13.5" cy="6.5" r=".5" fill="#B25866"/><circle cx="17.5" cy="10.5" r=".5" fill="#B25866"/><circle cx="8.5" cy="7.5" r=".5" fill="#B25866"/><circle cx="6.5" cy="12.5" r=".5" fill="#B25866"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.67-.75 1.67-1.67 0-.42-.16-.8-.44-1.09-.28-.29-.44-.67-.44-1.09 0-.92.75-1.67 1.67-1.67H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z"/></svg> Color:</label>
-                            <select id="color-${prod.id}" class="option-select-cute">
+                            <select id="color-${prod.id}" class="option-select-cute" onchange="app.updateCardActionUI('${prod.id}')">
                                 ${colorOpts}
                             </select>
                         </div>
@@ -410,24 +448,13 @@ const app = {
                     ${optionsHtml}
                     <div class="product-bottom">
                         <span class="product-price" id="price-${prod.id}">₹${prod.price.toFixed(2)}</span>
-                        <div class="card-action-group" style="display: flex; align-items: center; gap: 8px;">
-                            <div class="card-qty-stepper">
-                                <button type="button" class="card-qty-btn" onclick="app.changeCardQty('${prod.id}', -1)" title="Decrease Quantity">-</button>
-                                <span class="card-qty-val" id="qty-${prod.id}">1</span>
-                                <button type="button" class="card-qty-btn" onclick="app.changeCardQty('${prod.id}', 1)" title="Increase Quantity">+</button>
-                            </div>
-                            <button class="btn-add-cart" title="Add to Basket" onclick="app.addToCartWithQty('${prod.id}')">
-                                <svg class="icon-inline" style="stroke: var(--white); width: 22px; height: 22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <circle cx="9" cy="20" r="1.5" class="icon-filled"/>
-                                    <circle cx="18" cy="20" r="1.5" class="icon-filled"/>
-                                    <path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/>
-                                </svg>
-                            </button>
+                        <div id="action-group-${prod.id}" class="card-action-group" style="display: flex; align-items: center; gap: 8px;">
                         </div>
                     </div>
                 </div>
             `;
             grid.appendChild(card);
+            this.updateCardActionUI(prod.id);
         });
     },
 
@@ -615,20 +642,6 @@ const app = {
     renderCartPage() {
         const container = document.getElementById('cart-container');
         if (!container) return;
-        
-        const isAuthenticated = window.auth && window.auth.isAuthenticated();
-        
-        if (!isAuthenticated) {
-            container.innerHTML = `
-                <div class="cart-lock-screen cute-card">
-                    <div class="cart-lock-icon" style="color: var(--primary);"><svg class="icon-inline" style="width: 50px; height: 50px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <svg class="icon-inline" style="width: 50px; height: 50px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="2.5" class="icon-filled"/><circle cx="12" cy="6.5" r="2.5"/><circle cx="17" cy="10" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/><circle cx="8.5" cy="16" r="2.5"/><circle cx="7" cy="10" r="2.5"/></svg></div>
-                    <h2>Secure Login Required</h2>
-                    <p>To view your cart items, edit details, or proceed to checkout, you must log in securely. Setting up an account takes less than a minute!</p>
-                    <a href="/login?redirect=cart" class="btn-cute">Sign In / Register <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="4"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></a>
-                </div>
-            `;
-            return;
-        }
         
         if (this.cart.length === 0) {
             container.innerHTML = `

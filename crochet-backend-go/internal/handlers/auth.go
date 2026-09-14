@@ -26,11 +26,17 @@ import (
 var validate = validator.New()
 
 type OTPItem struct {
-	Code      string
+	Hash      []byte
 	ExpiresAt time.Time
 }
 
+type RateLimitItem struct {
+	Attempts  int
+	ResetTime time.Time
+}
+
 var otpStore sync.Map
+var otpRateLimitStore sync.Map
 
 type AuthHandler struct {
 	Queries db.Queries
@@ -81,6 +87,8 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		return
 	}
 
+	cleanEmail := strings.ToLower(req.Email)
+
 	// Check if user already exists
 	_, err := h.Queries.GetUserByEmail(context.Background(), req.Email)
 	if err == nil {
@@ -88,10 +96,33 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		return
 	}
 
-	// Generate 6-digit code
+	// Rate limiting logic (3 tries max per 15 minutes)
+	if val, ok := otpRateLimitStore.Load(cleanEmail); ok {
+		rl := val.(RateLimitItem)
+		if time.Now().Before(rl.ResetTime) {
+			if rl.Attempts >= 3 {
+				c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many OTP requests. Please try again after 15 minutes."})
+				return
+			}
+			rl.Attempts++
+			otpRateLimitStore.Store(cleanEmail, rl)
+		} else {
+			otpRateLimitStore.Store(cleanEmail, RateLimitItem{Attempts: 1, ResetTime: time.Now().Add(15 * time.Minute)})
+		}
+	} else {
+		otpRateLimitStore.Store(cleanEmail, RateLimitItem{Attempts: 1, ResetTime: time.Now().Add(15 * time.Minute)})
+	}
+
+	// Generate 6-digit code and hash it
 	code := fmt.Sprintf("%06d", rand.Intn(1000000))
-	otpStore.Store(strings.ToLower(req.Email), OTPItem{
-		Code:      code,
+	hashedCode, hashErr := bcrypt.GenerateFromPassword([]byte(code), 10)
+	if hashErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure OTP."})
+		return
+	}
+
+	otpStore.Store(cleanEmail, OTPItem{
+		Hash:      hashedCode,
 		ExpiresAt: time.Now().Add(10 * time.Minute),
 	})
 
@@ -139,7 +170,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if req.OTPCode != item.Code {
+	if err := bcrypt.CompareHashAndPassword(item.Hash, []byte(req.OTPCode)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid verification code. Please check your email inbox or spam folder."})
 		return
 	}

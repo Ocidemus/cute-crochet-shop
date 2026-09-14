@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"crochet-backend-go/internal/db"
+	"crochet-backend-go/internal/email"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -71,6 +72,10 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 		})
 		return
 	}
+
+	// 4. Send email notification
+	emailSvc := email.NewEmailService()
+	go emailSvc.SendContactEmail(req.Name, req.Email, req.Message)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

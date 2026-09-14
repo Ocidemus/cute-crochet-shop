@@ -2,8 +2,12 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 
 	"crochet-backend-go/internal/db"
 
@@ -25,20 +29,13 @@ type CreateShipmentRequest struct {
 	TrackingNumber string `json:"trackingNumber" validate:"required,min=3"`
 }
 
-// AdminAuth limits routes to admin queries using x-admin-key headers
+// AdminAuth limits routes to admin users by checking the JWT email
 func AdminAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		adminKey := c.GetHeader("X-Admin-Key")
-		expectedKey := os.Getenv("ADMIN_API_KEY")
-
-		if expectedKey == "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Admin portal key is not configured on server."})
-			c.Abort()
-			return
-		}
-
-		if adminKey == "" || adminKey != expectedKey {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Invalid or missing administrator credentials."})
+		email := c.GetString("email")
+		
+		if email != "craftingforyouofficial@gmail.com" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Only the store owner can access the admin portal."})
 			c.Abort()
 			return
 		}
@@ -241,5 +238,110 @@ func (h *AdminHandler) ListAllOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"orders":  orders,
+	})
+}
+
+// POST /api/admin/upload - Uploads a product image
+func (h *AdminHandler) UploadImage(c *gin.Context) {
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image uploaded."})
+		return
+	}
+
+	// Generate a unique filename
+	ext := filepath.Ext(file.Filename)
+	filename := uuid.New().String() + ext
+
+	// Save the file to the static assets directory
+	staticDir := os.Getenv("STATIC_DIR")
+	if staticDir == "" {
+		staticDir = "../cute-crochet-shop/static"
+	}
+	
+	uploadPath := filepath.Join(staticDir, "assets", "uploads")
+	// Ensure directory exists
+	os.MkdirAll(uploadPath, os.ModePerm)
+
+	savePath := filepath.Join(uploadPath, filename)
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"url":     "/assets/uploads/" + filename,
+	})
+}
+
+type CreateProductRequest struct {
+	Name        string   `json:"name" validate:"required"`
+	Description string   `json:"description" validate:"required"`
+	Price       float64  `json:"price" validate:"required,gt=0"`
+	Images      []string `json:"images" validate:"required"`
+}
+
+// POST /api/admin/products - Creates a new product
+func (h *AdminHandler) CreateProduct(c *gin.Context) {
+	var req CreateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := context.Background()
+	
+	// Create slug from name
+	slug := strings.ToLower(strings.ReplaceAll(req.Name, " ", "-"))
+	slug = strings.ReplaceAll(slug, "/", "-")
+	slug = fmt.Sprintf("%s-%s", slug, uuid.New().String()[:8]) // ensure uniqueness
+
+	var price pgtype.Numeric
+	price.Scan(strconv.FormatFloat(req.Price, 'f', 2, 64))
+
+	product, err := h.Queries.CreateProduct(ctx, db.CreateProductParams{
+		Slug:        slug,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       price,
+		Images:      req.Images,
+		IsActive:    true,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"product": product,
+	})
+}
+
+// DELETE /api/admin/products/:id - Deletes a product
+func (h *AdminHandler) DeleteProduct(c *gin.Context) {
+	productIDParam := c.Param("id")
+	productID, err := uuid.Parse(productIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product ID."})
+		return
+	}
+
+	ctx := context.Background()
+	var pgProductID pgtype.UUID
+	pgProductID.Bytes = productID
+	pgProductID.Valid = true
+
+	err = h.Queries.DeleteProduct(ctx, pgProductID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Product deleted successfully.",
 	})
 }

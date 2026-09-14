@@ -197,10 +197,13 @@ func main() {
 
 		// Admin Endpoints
 		admin := api.Group("/admin")
-		admin.Use(handlers.AdminAuth())
+		admin.Use(middleware.AuthRequired(), handlers.AdminAuth())
 		{
 			admin.GET("/orders", adminHandler.ListAllOrders)
 			admin.POST("/shipments", adminHandler.AttachShipment)
+			admin.POST("/upload", adminHandler.UploadImage)
+			admin.POST("/products", adminHandler.CreateProduct)
+			admin.DELETE("/products/:id", adminHandler.DeleteProduct)
 		}
 	}
 

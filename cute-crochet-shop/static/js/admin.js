@@ -1,60 +1,47 @@
 // admin.js - Admin Portal dashboard logic for CuteCrochet Shop
 const adminPortal = {
-    passkey: '',
     orders: [],
+    products: [],
     currentFilter: 'ALL',
 
     init() {
-        const savedKey = sessionStorage.getItem('admin_passkey');
-        if (savedKey) {
-            this.passkey = savedKey;
-            document.getElementById('admin-auth-modal').style.display = 'none';
-            this.fetchOrders();
-        } else {
-            document.getElementById('admin-auth-modal').style.display = 'flex';
-        }
-    },
-
-    async verifyPasskey() {
-        const input = document.getElementById('admin-passkey-input').value.trim();
-        const errorDiv = document.getElementById('auth-error-msg');
-
-        if (!input) {
-            errorDiv.innerText = 'Please enter your ADMIN_API_KEY passphrase.';
-            errorDiv.style.display = 'block';
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/admin/orders', {
-                headers: { 'X-Admin-Key': input }
-            });
-            const data = await res.json();
-
-            if (res.ok && data.success) {
-                this.passkey = input;
-                sessionStorage.setItem('admin_passkey', input);
-                document.getElementById('admin-auth-modal').style.display = 'none';
-                this.orders = data.orders || [];
-                this.renderDashboard();
-            } else {
-                errorDiv.innerText = data.error || 'Invalid Admin Key passphrase.';
-                errorDiv.style.display = 'block';
+        // Wait for auth to initialize
+        setTimeout(() => {
+            if (!window.auth || !window.auth.isAuthenticated()) {
+                window.location.href = '/login?redirect=admin';
+                return;
             }
-        } catch (err) {
-            errorDiv.innerText = 'Failed to connect to backend server.';
-            errorDiv.style.display = 'block';
-        }
+            
+            const user = window.auth.getUser();
+            if (user.email !== 'craftingforyouofficial@gmail.com') {
+                const errorDiv = document.getElementById('auth-error-msg');
+                errorDiv.innerText = 'Access denied. You must log in with craftingforyouofficial@gmail.com';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('admin-auth-modal').style.display = 'none';
+            document.getElementById('admin-main').style.display = 'block';
+            this.fetchOrders();
+            this.fetchProducts();
+        }, 500);
     },
 
-    logoutAdmin() {
-        sessionStorage.removeItem('admin_passkey');
-        this.passkey = '';
-        document.getElementById('admin-auth-modal').style.display = 'flex';
+    switchTab(tab) {
+        document.getElementById('section-orders').style.display = tab === 'orders' ? 'block' : 'none';
+        document.getElementById('section-products').style.display = tab === 'products' ? 'block' : 'none';
+        
+        document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
+        document.getElementById('tab-products').classList.toggle('active', tab === 'products');
+    },
+
+    getAuthHeaders() {
+        return {
+            'Authorization': `Bearer ${window.auth.getToken()}`
+        };
     },
 
     async fetchOrders() {
-        if (!this.passkey) return;
 
         const loader = document.getElementById('admin-loader');
         const listDiv = document.getElementById('admin-orders-list');
@@ -63,7 +50,7 @@ const adminPortal = {
 
         try {
             const res = await fetch('/api/admin/orders', {
-                headers: { 'X-Admin-Key': this.passkey }
+                headers: this.getAuthHeaders()
             });
             const data = await res.json();
 
@@ -251,7 +238,7 @@ const adminPortal = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-Key': this.passkey
+                    ...this.getAuthHeaders()
                 },
                 body: JSON.stringify({
                     orderId: orderId,
@@ -270,6 +257,120 @@ const adminPortal = {
             }
         } catch (err) {
             alert("Network error updating shipment.");
+        }
+    },
+
+    async fetchProducts() {
+        try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.products = data.products || [];
+                this.renderProducts();
+            }
+        } catch (err) {
+            console.error("Error fetching products:", err);
+        }
+    },
+
+    renderProducts() {
+        const container = document.getElementById('admin-products-list');
+        if (this.products.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">No products found.</p>';
+            return;
+        }
+
+        container.innerHTML = this.products.map(p => `
+            <div class="cute-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" alt="${p.name}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;">` : ''}
+                    <h4 style="margin: 0; color: var(--primary-dark);">${p.name}</h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin: 5px 0;">₹${parseFloat(p.price).toFixed(2)}</p>
+                    <p style="font-size: 12px; color: #666; margin: 10px 0;">${p.description}</p>
+                </div>
+                <button class="btn-cute" style="background: #FFF0F2; color: #D84A67; border-color: #FFD6E0; margin-top: 10px;" onclick="adminPortal.deleteProduct('${p.id}')">Remove Product</button>
+            </div>
+        `).join('');
+    },
+
+    async addProduct() {
+        const name = document.getElementById('new-prod-name').value.trim();
+        const price = document.getElementById('new-prod-price').value.trim();
+        const desc = document.getElementById('new-prod-desc').value.trim();
+        const fileInput = document.getElementById('new-prod-img');
+
+        if (!name || !price || !desc) {
+            alert("Please fill all text fields.");
+            return;
+        }
+        
+        let imageUrls = [];
+        if (fileInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            try {
+                const res = await fetch('/api/admin/upload', {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    imageUrls.push(data.url);
+                } else {
+                    alert("Image upload failed: " + data.error);
+                    return;
+                }
+            } catch (err) {
+                alert("Network error during image upload.");
+                return;
+            }
+        } else {
+            imageUrls.push('/assets/images/placeholder.jpg');
+        }
+
+        try {
+            const res = await fetch('/api/admin/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...this.getAuthHeaders()
+                },
+                body: JSON.stringify({
+                    name, price: parseFloat(price), description: desc, images: imageUrls
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert("Product created successfully! 🌸");
+                document.getElementById('new-prod-name').value = '';
+                document.getElementById('new-prod-price').value = '';
+                document.getElementById('new-prod-desc').value = '';
+                fileInput.value = '';
+                this.fetchProducts();
+            } else {
+                alert("Failed to create product: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Network error creating product.");
+        }
+    },
+
+    async deleteProduct(id) {
+        if (!confirm("Are you sure you want to delete this product?")) return;
+        try {
+            const res = await fetch(`/api/admin/products/${id}`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.fetchProducts();
+            } else {
+                alert("Failed to delete product: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Network error deleting product.");
         }
     }
 };

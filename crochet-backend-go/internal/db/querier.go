@@ -25,6 +25,10 @@ type Querier interface {
 	// ============================================================================
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payments, error)
 	// ============================================================================
+	// Products & Variants
+	// ============================================================================
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Products, error)
+	// ============================================================================
 	// Shipments
 	// ============================================================================
 	CreateShipment(ctx context.Context, arg CreateShipmentParams) (Shipments, error)
@@ -33,6 +37,7 @@ type Querier interface {
 	// Users
 	// ============================================================================
 	CreateUser(ctx context.Context, arg CreateUserParams) (Users, error)
+	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	GetAddressByID(ctx context.Context, id pgtype.UUID) (Addresses, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (Orders, error)
 	GetOrderByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (Orders, error)
@@ -46,9 +51,6 @@ type Querier interface {
 	GetVariantByProductSlug(ctx context.Context, slug string) (GetVariantByProductSlugRow, error)
 	GetVariantByProductSlugForUpdate(ctx context.Context, slug string) (GetVariantByProductSlugForUpdateRow, error)
 	GetVariantsByProductID(ctx context.Context, productID pgtype.UUID) ([]ProductVariants, error)
-	// ============================================================================
-	// Products & Variants
-	// ============================================================================
 	ListActiveProducts(ctx context.Context) ([]Products, error)
 	ListAddressesByUserID(ctx context.Context, userID pgtype.UUID) ([]Addresses, error)
 	ListOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]Orders, error)

@@ -165,6 +165,48 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	return i, err
 }
 
+const createProduct = `-- name: CreateProduct :one
+
+INSERT INTO products (slug, name, description, price, images, is_active)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, slug, name, description, price, images, is_active, created_at
+`
+
+type CreateProductParams struct {
+	Slug        string         `json:"slug"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Price       pgtype.Numeric `json:"price"`
+	Images      []string       `json:"images"`
+	IsActive    bool           `json:"is_active"`
+}
+
+// ============================================================================
+// Products & Variants
+// ============================================================================
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Products, error) {
+	row := q.db.QueryRow(ctx, createProduct,
+		arg.Slug,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.Images,
+		arg.IsActive,
+	)
+	var i Products
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.Images,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createShipment = `-- name: CreateShipment :one
 
 INSERT INTO shipments (order_id, courier_name, tracking_number, status)
@@ -237,6 +279,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (Users, 
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const deleteProduct = `-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = $1
+`
+
+func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteProduct, id)
+	return err
 }
 
 const getAddressByID = `-- name: GetAddressByID :one
@@ -600,15 +652,11 @@ func (q *Queries) GetVariantsByProductID(ctx context.Context, productID pgtype.U
 }
 
 const listActiveProducts = `-- name: ListActiveProducts :many
-
 SELECT id, slug, name, description, price, images, is_active, created_at FROM products
 WHERE is_active = TRUE
 ORDER BY created_at DESC
 `
 
-// ============================================================================
-// Products & Variants
-// ============================================================================
 func (q *Queries) ListActiveProducts(ctx context.Context) ([]Products, error) {
 	rows, err := q.db.Query(ctx, listActiveProducts)
 	if err != nil {

@@ -39,6 +39,15 @@ ORDER BY created_at DESC;
 -- Products & Variants
 -- ============================================================================
 
+-- name: CreateProduct :one
+INSERT INTO products (slug, name, description, price, images, is_active)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = $1;
+
 -- name: ListActiveProducts :many
 SELECT * FROM products
 WHERE is_active = TRUE

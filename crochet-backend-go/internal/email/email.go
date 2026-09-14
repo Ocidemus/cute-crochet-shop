@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"time"
 )
@@ -14,6 +15,10 @@ import (
 type EmailService struct {
 	ResendAPIKey string
 	SenderEmail  string
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPass     string
 }
 
 func NewEmailService() *EmailService {
@@ -25,6 +30,10 @@ func NewEmailService() *EmailService {
 	return &EmailService{
 		ResendAPIKey: apiKey,
 		SenderEmail:  sender,
+		SMTPHost:     os.Getenv("SMTP_HOST"),
+		SMTPPort:     os.Getenv("SMTP_PORT"),
+		SMTPUser:     os.Getenv("SMTP_USER"),
+		SMTPPass:     os.Getenv("SMTP_PASSWORD"),
 	}
 }
 
@@ -244,5 +253,73 @@ func (e *EmailService) SendOTPEmail(toEmail, otpCode string) {
 
 	// Fallback logging mode when RESEND_API_KEY is not configured
 	log.Printf("🔒 [MOCK OTP DISPATCH] Verification code [%s] generated for %s. (Valid for 10 minutes). Set RESEND_API_KEY in .env for live email delivery.", otpCode, toEmail)
+}
+
+// SendContactEmail sends a contact form submission to the official email address
+func (e *EmailService) SendContactEmail(name, replyToEmail, message string) {
+	officialEmail := "craftingforyouofficial@gmail.com"
+	subject := fmt.Sprintf("🌸 New Contact Form Submission from %s", name)
+
+	htmlBody := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<style>
+				body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 20px; color: #333; }
+				.container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+				.field { margin-bottom: 15px; }
+				.label { font-weight: bold; color: #555; }
+				.value { margin-top: 5px; padding: 10px; background: #f1f1f1; border-radius: 4px; }
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<h2>New Contact Message</h2>
+				<div class="field">
+					<div class="label">Name:</div>
+					<div class="value">%s</div>
+				</div>
+				<div class="field">
+					<div class="label">Email:</div>
+					<div class="value">%s</div>
+				</div>
+				<div class="field">
+					<div class="label">Message:</div>
+					<div class="value">%s</div>
+				</div>
+			</div>
+		</body>
+		</html>
+	`, name, replyToEmail, message)
+
+	if e.SMTPUser != "" && e.SMTPPass != "" {
+		host := e.SMTPHost
+		if host == "" {
+			host = "smtp.gmail.com"
+		}
+		port := e.SMTPPort
+		if port == "" {
+			port = "587"
+		}
+
+		auth := smtp.PlainAuth("", e.SMTPUser, e.SMTPPass, host)
+		
+		msg := []byte(fmt.Sprintf("To: %s\r\n"+
+			"Reply-To: %s\r\n"+
+			"Subject: %s\r\n"+
+			"MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"+
+			"%s\r\n", officialEmail, replyToEmail, subject, htmlBody))
+
+		err := smtp.SendMail(host+":"+port, auth, e.SMTPUser, []string{officialEmail}, msg)
+		if err != nil {
+			log.Printf("[ERROR] Failed to send contact email via SMTP: %v", err)
+			return
+		}
+		log.Printf("📩 [SUCCESS] Contact email dispatched to %s via SMTP", officialEmail)
+		return
+	}
+
+	log.Printf("📩 [MOCK CONTACT EMAIL] Message from %s (%s): %s", name, replyToEmail, message)
 }
 
