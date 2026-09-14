@@ -40,8 +40,8 @@ ORDER BY created_at DESC;
 -- ============================================================================
 
 -- name: CreateProduct :one
-INSERT INTO products (slug, name, description, price, images, is_active)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO products (slug, name, description, price, images, colors, is_active)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: DeleteProduct :exec
@@ -156,5 +156,5 @@ WHERE order_id = $1
 ORDER BY shipped_at DESC;
 -- name: UpdateProduct :exec
 UPDATE products
-SET name = $2, description = $3, price = $4, images = $5
+SET name = $2, description = $3, price = $4, images = $5, colors = $6
 WHERE id = $1;

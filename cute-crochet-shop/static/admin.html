@@ -243,6 +243,10 @@
                         <input type="number" id="new-prod-price" placeholder="499.00">
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                        <label for="new-prod-colors">Colors / Variants (comma separated, optional)</label>
+                        <input type="text" id="new-prod-colors" placeholder="e.g. Pink, Beige, Chocolate Brown">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
                         <label for="new-prod-desc">Description</label>
                         <textarea id="new-prod-desc" rows="3" placeholder="A cute lavender bunny..."></textarea>
                     </div>
@@ -276,9 +280,14 @@
                 <input type="text" id="edit-prod-name" class="passkey-input" style="text-align: left; margin: 5px 0 10px 0;" />
             </div>
 
-            <div style="text-align: left; margin-bottom: 10px;">
+            <div class="text-align: left; margin-bottom: 10px;">
                 <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">PRICE (₹)</label>
                 <input type="number" id="edit-prod-price" class="passkey-input" style="text-align: left; margin: 5px 0 10px 0;" />
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">COLORS (comma separated, optional)</label>
+                <input type="text" id="edit-prod-colors" class="passkey-input" style="text-align: left; margin: 5px 0 10px 0;" placeholder="e.g. Pink, Blue" />
             </div>
             
             <div style="text-align: left; margin-bottom: 10px;">

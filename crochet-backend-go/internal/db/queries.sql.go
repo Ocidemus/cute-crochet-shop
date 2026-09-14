@@ -167,9 +167,9 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 
 const createProduct = `-- name: CreateProduct :one
 
-INSERT INTO products (slug, name, description, price, images, is_active)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, slug, name, description, price, images, is_active, created_at
+INSERT INTO products (slug, name, description, price, images, colors, is_active)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, slug, name, description, price, images, colors, is_active, created_at
 `
 
 type CreateProductParams struct {
@@ -178,6 +178,7 @@ type CreateProductParams struct {
 	Description string         `json:"description"`
 	Price       pgtype.Numeric `json:"price"`
 	Images      []string       `json:"images"`
+	Colors      []string       `json:"colors"`
 	IsActive    bool           `json:"is_active"`
 }
 
@@ -191,6 +192,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.Description,
 		arg.Price,
 		arg.Images,
+		arg.Colors,
 		arg.IsActive,
 	)
 	var i Products
@@ -201,6 +203,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Description,
 		&i.Price,
 		&i.Images,
+		&i.Colors,
 		&i.IsActive,
 		&i.CreatedAt,
 	)
@@ -402,7 +405,7 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID pgtype.UUI
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT id, slug, name, description, price, images, is_active, created_at FROM products
+SELECT id, slug, name, description, price, images, colors, is_active, created_at FROM products
 WHERE id = $1
 `
 
@@ -416,6 +419,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id pgtype.UUID) (Products,
 		&i.Description,
 		&i.Price,
 		&i.Images,
+		&i.Colors,
 		&i.IsActive,
 		&i.CreatedAt,
 	)
@@ -652,7 +656,7 @@ func (q *Queries) GetVariantsByProductID(ctx context.Context, productID pgtype.U
 }
 
 const listActiveProducts = `-- name: ListActiveProducts :many
-SELECT id, slug, name, description, price, images, is_active, created_at FROM products
+SELECT id, slug, name, description, price, images, colors, is_active, created_at FROM products
 WHERE is_active = TRUE
 ORDER BY created_at DESC
 `
@@ -673,6 +677,7 @@ func (q *Queries) ListActiveProducts(ctx context.Context) ([]Products, error) {
 			&i.Description,
 			&i.Price,
 			&i.Images,
+			&i.Colors,
 			&i.IsActive,
 			&i.CreatedAt,
 		); err != nil {
@@ -774,7 +779,7 @@ func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusPa
 
 const updateProduct = `-- name: UpdateProduct :exec
 UPDATE products
-SET name = $2, description = $3, price = $4, images = $5
+SET name = $2, description = $3, price = $4, images = $5, colors = $6
 WHERE id = $1
 `
 
@@ -784,6 +789,7 @@ type UpdateProductParams struct {
 	Description string         `json:"description"`
 	Price       pgtype.Numeric `json:"price"`
 	Images      []string       `json:"images"`
+	Colors      []string       `json:"colors"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {
@@ -793,6 +799,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) er
 		arg.Description,
 		arg.Price,
 		arg.Images,
+		arg.Colors,
 	)
 	return err
 }

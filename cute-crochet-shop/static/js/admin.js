@@ -300,6 +300,7 @@ const adminPortal = {
         const name = document.getElementById('new-prod-name').value.trim();
         const price = document.getElementById('new-prod-price').value.trim();
         const desc = document.getElementById('new-prod-desc').value.trim();
+        const colorsRaw = document.getElementById('new-prod-colors').value.trim();
         const fileInput = document.getElementById('new-prod-img');
 
         if (!name || !price || !desc) {
@@ -334,6 +335,8 @@ const adminPortal = {
             imageUrls.push('/assets/images/placeholder.jpg');
         }
 
+        const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim()).filter(c => c) : [];
+
         try {
             const res = await fetch('/api/admin/products', {
                 method: 'POST',
@@ -342,7 +345,7 @@ const adminPortal = {
                     ...this.getAuthHeaders()
                 },
                 body: JSON.stringify({
-                    name, price: parseFloat(price), description: desc, images: imageUrls
+                    name, price: parseFloat(price), description: desc, images: imageUrls, colors: colors
                 })
             });
             const data = await res.json();
@@ -351,6 +354,7 @@ const adminPortal = {
                 document.getElementById('new-prod-name').value = '';
                 document.getElementById('new-prod-price').value = '';
                 document.getElementById('new-prod-desc').value = '';
+                document.getElementById('new-prod-colors').value = '';
                 fileInput.value = '';
                 this.fetchProducts();
             } else {
@@ -387,6 +391,7 @@ const adminPortal = {
         document.getElementById('edit-prod-name').value = prod.name;
         document.getElementById('edit-prod-price').value = prod.price;
         document.getElementById('edit-prod-desc').value = prod.description;
+        document.getElementById('edit-prod-colors').value = prod.colors ? prod.colors.join(', ') : '';
 
         document.getElementById('edit-product-modal').style.display = 'flex';
     },
@@ -396,6 +401,7 @@ const adminPortal = {
         const name = document.getElementById('edit-prod-name').value.trim();
         const price = document.getElementById('edit-prod-price').value.trim();
         const desc = document.getElementById('edit-prod-desc').value.trim();
+        const colorsRaw = document.getElementById('edit-prod-colors').value.trim();
 
         if (!name || !price || !desc) {
             alert("Please fill all fields.");
@@ -404,6 +410,8 @@ const adminPortal = {
 
         const prod = this.products.find(p => p.id === id);
         if (!prod) return;
+
+        const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim()).filter(c => c) : [];
 
         try {
             const res = await fetch(`/api/admin/products/${id}`, {
@@ -416,7 +424,8 @@ const adminPortal = {
                     name,
                     price: parseFloat(price),
                     description: desc,
-                    images: prod.images // Keep existing images for now
+                    images: prod.images,
+                    colors: colors
                 })
             });
             const data = await res.json();

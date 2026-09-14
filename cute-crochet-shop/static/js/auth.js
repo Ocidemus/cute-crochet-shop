@@ -193,7 +193,7 @@ const auth = {
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
-                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px;">My Account (${displayName}) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">👤 ${displayName}</a>
                 <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;
             navLinks.appendChild(profileLi);

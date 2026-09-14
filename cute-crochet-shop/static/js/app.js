@@ -282,8 +282,18 @@ const app = {
                             description: prod.description,
                             price: parseFloat(prod.price),
                             images: prod.images && prod.images.length > 0 ? prod.images : ['/assets/images/placeholder.jpg'],
-                            hasOptions: false
+                            hasOptions: !!(prod.colors && prod.colors.length > 0)
                         };
+
+                        if (PRODUCTS[prod.slug].hasOptions) {
+                            PRODUCTS[prod.slug].colorOptions = prod.colors.map(c => ({
+                                label: c.trim(),
+                                value: c.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')
+                            }));
+                            PRODUCTS[prod.slug].packOptions = [
+                                { label: `Single (₹${parseFloat(prod.price)})`, value: 'single', price: parseFloat(prod.price) }
+                            ];
+                        }
                     }
                 });
             }

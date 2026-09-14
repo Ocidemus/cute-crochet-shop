@@ -304,6 +304,7 @@ type CreateProductRequest struct {
 	Description string   `json:"description" validate:"required"`
 	Price       float64  `json:"price" validate:"required,gt=0"`
 	Images      []string `json:"images" validate:"required"`
+	Colors      []string `json:"colors"`
 }
 
 // POST /api/admin/products - Creates a new product
@@ -330,6 +331,7 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 		Description: req.Description,
 		Price:       price,
 		Images:      req.Images,
+		Colors:      req.Colors,
 		IsActive:    true,
 	})
 
@@ -349,6 +351,7 @@ type UpdateProductRequest struct {
 	Description string   `json:"description" validate:"required"`
 	Price       float64  `json:"price" validate:"required,gt=0"`
 	Images      []string `json:"images" validate:"required"`
+	Colors      []string `json:"colors"`
 }
 
 // PUT /api/admin/products/:id - Updates an existing product
@@ -380,6 +383,7 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
 		Description: req.Description,
 		Price:       price,
 		Images:      req.Images,
+		Colors:      req.Colors,
 	})
 
 	if err != nil {

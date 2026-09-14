@@ -64,6 +64,7 @@ type Products struct {
 	Description string             `json:"description"`
 	Price       pgtype.Numeric     `json:"price"`
 	Images      []string           `json:"images"`
+	Colors      []string           `json:"colors"`
 	IsActive    bool               `json:"is_active"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }

@@ -35,6 +35,7 @@ CREATE TABLE products (
     description TEXT NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
     images TEXT[] NOT NULL,
+    colors TEXT[] DEFAULT '{}'::TEXT[],
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
