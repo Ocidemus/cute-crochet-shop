@@ -158,3 +158,16 @@ ORDER BY shipped_at DESC;
 UPDATE products
 SET name = $2, description = $3, price = $4, images = $5, colors = $6
 WHERE id = $1;
+
+-- ============================================================================
+-- Custom Design Requests
+-- ============================================================================
+
+-- name: CreateCustomRequest :one
+INSERT INTO custom_requests (name, email, message, image_url)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: ListCustomRequests :many
+SELECT * FROM custom_requests
+ORDER BY created_at DESC;

@@ -182,8 +182,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 class="section-title" style="margin-bottom: 0;">Store Admin Dashboard</h2>
             <div>
-                <button class="filter-btn" id="tab-orders" onclick="adminPortal.switchTab('orders')" style="margin-right: 10px;">Orders</button>
-                <button class="filter-btn" id="tab-products" onclick="adminPortal.switchTab('products')">Products</button>
+                <button class="filter-btn active" id="tab-orders" onclick="adminPortal.switchTab('orders')" style="margin-right: 10px;">Orders</button>
+                <button class="filter-btn" id="tab-products" onclick="adminPortal.switchTab('products')" style="margin-right: 10px;">Products</button>
+                <button class="filter-btn" id="tab-requests" onclick="adminPortal.switchTab('requests')">Custom Requests</button>
             </div>
         </div>
         
@@ -263,6 +264,28 @@
                 <!-- Products render here -->
             </div>
         </div>
+        
+        <!-- Custom Requests Section -->
+        <div id="section-requests" style="display: none;">
+            <div class="admin-card">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Request Details</th>
+                                <th>Reference Image</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-table-body">
+                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading requests...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
     </main>
 
     <!-- Edit Product Modal -->

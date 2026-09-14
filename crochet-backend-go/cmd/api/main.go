@@ -205,6 +205,7 @@ func main() {
 			admin.POST("/products", adminHandler.CreateProduct)
 			admin.PUT("/products/:id", adminHandler.UpdateProduct)
 			admin.DELETE("/products/:id", adminHandler.DeleteProduct)
+			admin.GET("/requests", adminHandler.ListCustomRequests)
 		}
 	}
 

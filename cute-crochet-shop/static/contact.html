@@ -91,6 +91,10 @@
                     <label for="contact-message">What would you like to say? <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="12" cy="13" r="6"/><circle cx="9.5" cy="11.5" r="0.6" fill="currentColor"/><circle cx="14.5" cy="11.5" r="0.6" fill="currentColor"/><path d="M10 15a2 2 0 0 0 4 0h-4z"/></svg></label>
                     <textarea id="contact-message" name="message" rows="5" placeholder="Stitch your message here..." required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="contact-image">Reference Image (Max 2MB, optional) <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></label>
+                    <input type="file" id="contact-image" name="image" accept="image/png, image/jpeg, image/webp" style="padding: 10px; background: #fff; border: 2px solid #EEDCE4; border-radius: 12px; width: 100%;">
+                </div>
                 <button type="submit" class="btn-cute" style="width: 100%; text-align: center; margin-top: 10px;">Send Message <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="m2 7 8.2 5.5a3 3 0 0 0 3.6 0L22 7"/></svg></button>
             </form>
         </div>

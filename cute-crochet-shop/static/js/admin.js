@@ -4,6 +4,16 @@ const adminPortal = {
     products: [],
     currentFilter: 'ALL',
 
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     init() {
         // Wait for auth to initialize
         setTimeout(() => {
@@ -24,21 +34,70 @@ const adminPortal = {
             document.getElementById('admin-main').style.display = 'block';
             this.fetchOrders();
             this.fetchProducts();
+            this.fetchRequests();
         }, 500);
     },
 
     switchTab(tab) {
         document.getElementById('section-orders').style.display = tab === 'orders' ? 'block' : 'none';
         document.getElementById('section-products').style.display = tab === 'products' ? 'block' : 'none';
+        document.getElementById('section-requests').style.display = tab === 'requests' ? 'block' : 'none';
         
         document.getElementById('tab-orders').classList.toggle('active', tab === 'orders');
         document.getElementById('tab-products').classList.toggle('active', tab === 'products');
+        document.getElementById('tab-requests').classList.toggle('active', tab === 'requests');
     },
 
     getAuthHeaders() {
         return {
             'Authorization': `Bearer ${window.auth.getToken()}`
         };
+    },
+
+    async fetchRequests() {
+        const tbody = document.getElementById('requests-table-body');
+        try {
+            const res = await fetch('/api/admin/requests', { headers: this.getAuthHeaders() });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (!data.requests || data.requests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No custom requests yet.</td></tr>';
+                    document.getElementById('requests-badge').style.display = 'none';
+                    return;
+                }
+                
+                document.getElementById('requests-badge').style.display = 'inline-block';
+                document.getElementById('requests-badge').textContent = data.requests.length;
+
+                tbody.innerHTML = data.requests.map(req => {
+                    const date = new Date(req.created_at).toLocaleDateString('en-IN', {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    const imgHtml = req.image_url && req.image_url.Valid && req.image_url.String
+                        ? `<a href="${req.image_url.String}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">View Image</a>`
+                        : `<span style="color: var(--text-muted);">No image</span>`;
+                        
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td>
+                                <strong>${this.escapeHTML(req.name)}</strong><br>
+                                <a href="mailto:${this.escapeHTML(req.email)}" style="font-size: 12px; color: var(--primary);">${this.escapeHTML(req.email)}</a>
+                            </td>
+                            <td style="max-width: 300px; white-space: normal;">
+                                ${this.escapeHTML(req.message)}
+                            </td>
+                            <td>${imgHtml}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Failed to load requests.</td></tr>';
+        }
     },
 
     async fetchOrders() {

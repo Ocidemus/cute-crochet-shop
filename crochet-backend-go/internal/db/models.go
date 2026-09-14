@@ -20,6 +20,16 @@ type Addresses struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type CustomRequests struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Email     string             `json:"email"`
+	Message   string             `json:"message"`
+	ImageUrl  pgtype.Text        `json:"image_url"`
+	Status    string             `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type OrderItems struct {
 	ID              pgtype.UUID    `json:"id"`
 	OrderID         pgtype.UUID    `json:"order_id"`

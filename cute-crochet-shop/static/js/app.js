@@ -6,7 +6,7 @@ const PRODUCTS = {
         name: 'Request Custom Design',
         description: 'Have a specific design in mind? Let us know and we will craft it for you! We will contact you once the design is approved.',
         price: 0,
-        images: ['/assets/images/placeholder.jpg'],
+        images: ['/assets/custom_design.png'],
         hasOptions: false
     },
     'bears': {
@@ -791,10 +791,26 @@ const app = {
         }
         
         try {
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('message', message);
+            
+            const imageFile = document.getElementById('contact-image')?.files[0];
+            if (imageFile) {
+                if (imageFile.size > 2 * 1024 * 1024) {
+                    if (errorEl) {
+                        errorEl.innerHTML = `<div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 12px 16px;">Image size cannot exceed 2MB.</div>`;
+                        errorEl.style.display = 'block';
+                    }
+                    return;
+                }
+                formData.append('image', imageFile);
+            }
+
             const response = await fetch('/api/contact', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, message })
+                body: formData // No Content-Type header needed, browser sets it automatically with boundaries
             });
             
             const data = await response.json();

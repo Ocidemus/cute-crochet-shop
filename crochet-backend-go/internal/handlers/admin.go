@@ -422,3 +422,19 @@ func (h *AdminHandler) DeleteProduct(c *gin.Context) {
 		"message": "Product deleted successfully.",
 	})
 }
+
+// GET /api/admin/requests - Lists all custom design requests
+func (h *AdminHandler) ListCustomRequests(c *gin.Context) {
+	ctx := context.Background()
+	
+	requests, err := h.Queries.ListCustomRequests(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch custom requests."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"requests": requests,
+	})
+}

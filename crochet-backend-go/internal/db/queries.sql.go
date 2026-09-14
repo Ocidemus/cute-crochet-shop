@@ -56,6 +56,43 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 	return i, err
 }
 
+const createCustomRequest = `-- name: CreateCustomRequest :one
+
+INSERT INTO custom_requests (name, email, message, image_url)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, email, message, image_url, status, created_at
+`
+
+type CreateCustomRequestParams struct {
+	Name     string      `json:"name"`
+	Email    string      `json:"email"`
+	Message  string      `json:"message"`
+	ImageUrl pgtype.Text `json:"image_url"`
+}
+
+// ============================================================================
+// Custom Design Requests
+// ============================================================================
+func (q *Queries) CreateCustomRequest(ctx context.Context, arg CreateCustomRequestParams) (CustomRequests, error) {
+	row := q.db.QueryRow(ctx, createCustomRequest,
+		arg.Name,
+		arg.Email,
+		arg.Message,
+		arg.ImageUrl,
+	)
+	var i CustomRequests
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Message,
+		&i.ImageUrl,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createOrder = `-- name: CreateOrder :one
 
 INSERT INTO orders (user_id, address_id, status, total_amount, razorpay_order_id)
@@ -715,6 +752,39 @@ func (q *Queries) ListAddressesByUserID(ctx context.Context, userID pgtype.UUID)
 			&i.State,
 			&i.Pincode,
 			&i.IsDefault,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCustomRequests = `-- name: ListCustomRequests :many
+SELECT id, name, email, message, image_url, status, created_at FROM custom_requests
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListCustomRequests(ctx context.Context) ([]CustomRequests, error) {
+	rows, err := q.db.Query(ctx, listCustomRequests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CustomRequests
+	for rows.Next() {
+		var i CustomRequests
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Message,
+			&i.ImageUrl,
+			&i.Status,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

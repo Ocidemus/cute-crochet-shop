@@ -16,6 +16,10 @@ type Querier interface {
 	// ============================================================================
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (Addresses, error)
 	// ============================================================================
+	// Custom Design Requests
+	// ============================================================================
+	CreateCustomRequest(ctx context.Context, arg CreateCustomRequestParams) (CustomRequests, error)
+	// ============================================================================
 	// Orders & OrderItems
 	// ============================================================================
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Orders, error)
@@ -53,6 +57,7 @@ type Querier interface {
 	GetVariantsByProductID(ctx context.Context, productID pgtype.UUID) ([]ProductVariants, error)
 	ListActiveProducts(ctx context.Context) ([]Products, error)
 	ListAddressesByUserID(ctx context.Context, userID pgtype.UUID) ([]Addresses, error)
+	ListCustomRequests(ctx context.Context) ([]CustomRequests, error)
 	ListOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]Orders, error)
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) error
