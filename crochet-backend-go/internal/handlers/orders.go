@@ -25,8 +25,9 @@ type OrdersHandler struct {
 }
 
 type OrderItemRequest struct {
-	ProductID string `json:"product_id" validate:"required"`
-	Quantity  int32  `json:"quantity" validate:"required,gt=0"`
+	ProductID   string  `json:"product_id" validate:"required"`
+	Quantity    int32   `json:"quantity" validate:"required,gt=0"`
+	ClientPrice float64 `json:"price" validate:"required"`
 }
 
 type CreateOrderRequest struct {
@@ -161,6 +162,16 @@ func (h *OrdersHandler) CreateOrder(c *gin.Context) {
 		// Re-read price from database
 		fValue, _ := variant.Price.Float64Value()
 		priceVal := fValue.Float64
+
+		// Validate price sync
+		if math.Abs(priceVal-item.ClientPrice) > 0.01 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "PRICE_MISMATCH",
+				"message": "Product prices have been updated by the store administrator. Please refresh your page to synchronize the latest prices before checking out.",
+			})
+			return
+		}
+
 		calculatedTotal += priceVal * float64(item.Quantity)
 
 		itemsToInsert = append(itemsToInsert, itemDetail{

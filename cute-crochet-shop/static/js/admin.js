@@ -288,7 +288,10 @@ const adminPortal = {
                     <p style="font-size: 13px; color: var(--text-muted); margin: 5px 0;">₹${parseFloat(p.price).toFixed(2)}</p>
                     <p style="font-size: 12px; color: #666; margin: 10px 0;">${p.description}</p>
                 </div>
-                <button class="btn-cute" style="background: #FFF0F2; color: #D84A67; border-color: #FFD6E0; margin-top: 10px;" onclick="adminPortal.deleteProduct('${p.id}')">Remove Product</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-cute" style="flex: 1; padding: 8px;" onclick="adminPortal.openEditProductModal('${p.id}')">Edit</button>
+                    <button class="btn-cute" style="background: #FFF0F2; color: #D84A67; border-color: #FFD6E0; flex: 1; padding: 8px;" onclick="adminPortal.deleteProduct('${p.id}')">Remove</button>
+                </div>
             </div>
         `).join('');
     },
@@ -306,24 +309,26 @@ const adminPortal = {
         
         let imageUrls = [];
         if (fileInput.files.length > 0) {
-            const formData = new FormData();
-            formData.append('image', fileInput.files[0]);
-            try {
-                const res = await fetch('/api/admin/upload', {
-                    method: 'POST',
-                    headers: this.getAuthHeaders(),
-                    body: formData
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    imageUrls.push(data.url);
-                } else {
-                    alert("Image upload failed: " + data.error);
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const formData = new FormData();
+                formData.append('image', fileInput.files[i]);
+                try {
+                    const res = await fetch('/api/admin/upload', {
+                        method: 'POST',
+                        headers: this.getAuthHeaders(),
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        imageUrls.push(data.url);
+                    } else {
+                        alert(`Image upload failed for file ${fileInput.files[i].name}: ` + data.error);
+                        return;
+                    }
+                } catch (err) {
+                    alert(`Network error during image upload for ${fileInput.files[i].name}.`);
                     return;
                 }
-            } catch (err) {
-                alert("Network error during image upload.");
-                return;
             }
         } else {
             imageUrls.push('/assets/images/placeholder.jpg');
@@ -371,6 +376,59 @@ const adminPortal = {
             }
         } catch (err) {
             alert("Network error deleting product.");
+        }
+    },
+
+    openEditProductModal(id) {
+        const prod = this.products.find(p => p.id === id);
+        if (!prod) return;
+
+        document.getElementById('edit-prod-id').value = id;
+        document.getElementById('edit-prod-name').value = prod.name;
+        document.getElementById('edit-prod-price').value = prod.price;
+        document.getElementById('edit-prod-desc').value = prod.description;
+
+        document.getElementById('edit-product-modal').style.display = 'flex';
+    },
+
+    async saveEditedProduct() {
+        const id = document.getElementById('edit-prod-id').value;
+        const name = document.getElementById('edit-prod-name').value.trim();
+        const price = document.getElementById('edit-prod-price').value.trim();
+        const desc = document.getElementById('edit-prod-desc').value.trim();
+
+        if (!name || !price || !desc) {
+            alert("Please fill all fields.");
+            return;
+        }
+
+        const prod = this.products.find(p => p.id === id);
+        if (!prod) return;
+
+        try {
+            const res = await fetch(`/api/admin/products/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...this.getAuthHeaders()
+                },
+                body: JSON.stringify({
+                    name,
+                    price: parseFloat(price),
+                    description: desc,
+                    images: prod.images // Keep existing images for now
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                document.getElementById('edit-product-modal').style.display = 'none';
+                alert("Product updated successfully! 🌸");
+                this.fetchProducts();
+            } else {
+                alert("Failed to update product: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            alert("Network error updating product.");
         }
     }
 };

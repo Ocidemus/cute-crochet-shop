@@ -263,6 +263,16 @@ const checkout = {
                     }
                 } else {
                     loader.classList.remove('active');
+                    if (data.error === "PRICE_MISMATCH") {
+                        if (errorEl) {
+                            errorEl.textContent = data.message;
+                            errorEl.style.display = 'block';
+                            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        // Refresh page after a brief delay to show the new prices
+                        setTimeout(() => window.location.reload(), 4000);
+                        return;
+                    }
                     if (errorEl) {
                         errorEl.textContent = data.error || "Failed to initiate payment order.";
                         errorEl.style.display = 'block';

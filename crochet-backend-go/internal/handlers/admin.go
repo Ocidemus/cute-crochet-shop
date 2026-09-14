@@ -344,6 +344,55 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 	})
 }
 
+type UpdateProductRequest struct {
+	Name        string   `json:"name" validate:"required"`
+	Description string   `json:"description" validate:"required"`
+	Price       float64  `json:"price" validate:"required,gt=0"`
+	Images      []string `json:"images" validate:"required"`
+}
+
+// PUT /api/admin/products/:id - Updates an existing product
+func (h *AdminHandler) UpdateProduct(c *gin.Context) {
+	productIDParam := c.Param("id")
+	productID, err := uuid.Parse(productIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product ID."})
+		return
+	}
+
+	var req UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := context.Background()
+	var pgProductID pgtype.UUID
+	pgProductID.Bytes = productID
+	pgProductID.Valid = true
+
+	var price pgtype.Numeric
+	price.Scan(strconv.FormatFloat(req.Price, 'f', 2, 64))
+
+	err = h.Queries.UpdateProduct(ctx, db.UpdateProductParams{
+		ID:          pgProductID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       price,
+		Images:      req.Images,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Product updated successfully.",
+	})
+}
+
 // DELETE /api/admin/products/:id - Deletes a product
 func (h *AdminHandler) DeleteProduct(c *gin.Context) {
 	productIDParam := c.Param("id")

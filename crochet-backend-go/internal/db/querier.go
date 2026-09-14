@@ -55,6 +55,7 @@ type Querier interface {
 	ListAddressesByUserID(ctx context.Context, userID pgtype.UUID) ([]Addresses, error)
 	ListOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]Orders, error)
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) error
 	UpdateVariantStock(ctx context.Context, arg UpdateVariantStockParams) error
 }
 

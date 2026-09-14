@@ -234,21 +234,21 @@
             <div class="cute-card" style="margin-bottom: 30px;">
                 <h3>Add New Product</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-                    <div>
-                        <label class="form-label">Product Name</label>
-                        <input type="text" id="new-prod-name" class="form-input-cute" placeholder="e.g. Lavender Bunny">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="new-prod-name">Product Name</label>
+                        <input type="text" id="new-prod-name" placeholder="e.g. Lavender Bunny">
                     </div>
-                    <div>
-                        <label class="form-label">Price (₹)</label>
-                        <input type="number" id="new-prod-price" class="form-input-cute" placeholder="499.00">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="new-prod-price">Price (₹)</label>
+                        <input type="number" id="new-prod-price" placeholder="499.00">
                     </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label class="form-label">Description</label>
-                        <textarea id="new-prod-desc" class="form-input-cute" rows="3" placeholder="A cute lavender bunny..."></textarea>
+                    <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                        <label for="new-prod-desc">Description</label>
+                        <textarea id="new-prod-desc" rows="3" placeholder="A cute lavender bunny..."></textarea>
                     </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label class="form-label">Product Image</label>
-                        <input type="file" id="new-prod-img" class="form-input-cute" accept="image/*">
+                    <div class="form-group" style="grid-column: 1 / -1; margin-bottom: 0;">
+                        <label for="new-prod-img">Product Images (Select multiple)</label>
+                        <input type="file" id="new-prod-img" accept="image/*" multiple style="padding-top: 10px;">
                     </div>
                 </div>
                 <button class="btn-cute" style="margin-top: 15px; width: 100%; justify-content: center;" onclick="adminPortal.addProduct()">Save Product</button>
@@ -260,6 +260,40 @@
             </div>
         </div>
     </main>
+
+    <!-- Edit Product Modal -->
+    <div id="edit-product-modal" class="passkey-overlay" style="display: none;">
+        <div class="passkey-box" style="max-width: 500px;">
+            <div style="display: inline-block; color: var(--primary-dark); margin-bottom: 5px;">
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:40px; height:40px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <h3 style="color: var(--primary-dark); margin-top: 5px;">Edit Product</h3>
+            
+            <input type="hidden" id="edit-prod-id" />
+            
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">PRODUCT NAME</label>
+                <input type="text" id="edit-prod-name" class="passkey-input" style="text-align: left; margin: 5px 0 10px 0;" />
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">PRICE (₹)</label>
+                <input type="number" id="edit-prod-price" class="passkey-input" style="text-align: left; margin: 5px 0 10px 0;" />
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted);">DESCRIPTION</label>
+                <textarea id="edit-prod-desc" class="passkey-input" rows="3" style="text-align: left; margin: 5px 0 10px 0; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-cute" style="flex: 1; justify-content: center;" onclick="adminPortal.saveEditedProduct()">
+                    Save Changes
+                </button>
+                <button class="btn-cute" style="background: #F0F0F0; color: #666; border-color: #DDD;" onclick="document.getElementById('edit-product-modal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Attach Shipment Modal -->
     <div id="shipment-modal" class="passkey-overlay" style="display: none;">

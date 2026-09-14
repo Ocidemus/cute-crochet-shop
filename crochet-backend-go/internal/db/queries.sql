@@ -154,3 +154,7 @@ RETURNING *;
 SELECT * FROM shipments
 WHERE order_id = $1
 ORDER BY shipped_at DESC;
+-- name: UpdateProduct :exec
+UPDATE products
+SET name = $2, description = $3, price = $4, images = $5
+WHERE id = $1;
