@@ -3,9 +3,8 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -273,30 +272,60 @@ func (h *AdminHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	// Generate a unique filename
-	ext := filepath.Ext(file.Filename)
-	filename := uuid.New().String() + ext
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open image."})
+		return
+	}
+	defer f.Close()
+	
+	data, err := io.ReadAll(f)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image."})
+		return
+	}
 
-	// Save the file to the static assets directory
-	staticDir := os.Getenv("STATIC_DIR")
-	if staticDir == "" {
-		staticDir = "../cute-crochet-shop/static"
+	contentType := file.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
 	}
 	
-	uploadPath := filepath.Join(staticDir, "assets", "uploads")
-	// Ensure directory exists
-	os.MkdirAll(uploadPath, os.ModePerm)
-
-	savePath := filepath.Join(uploadPath, filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image."})
+	id, err := h.Queries.SaveImage(context.Background(), db.SaveImageParams{
+		ContentType: contentType,
+		ImageData:   data,
+	})
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image to db."})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"url":     "/assets/uploads/" + filename,
+		"url":     "/api/images/" + uuid.UUID(id.Bytes).String(),
 	})
+}
+
+// GET /api/images/:id - Serves an image from the database
+func (h *AdminHandler) ServeImage(c *gin.Context) {
+	idStr := c.Param("id")
+	parsedID, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var pgID pgtype.UUID
+	pgID.Bytes = parsedID
+	pgID.Valid = true
+
+	img, err := h.Queries.GetImage(context.Background(), pgID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Image not found"})
+		return
+	}
+
+	c.Data(http.StatusOK, img.ContentType, img.ImageData)
 }
 
 type CreateProductRequest struct {

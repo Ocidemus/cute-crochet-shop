@@ -207,6 +207,8 @@ func main() {
 			admin.DELETE("/products/:id", adminHandler.DeleteProduct)
 			admin.GET("/requests", adminHandler.ListCustomRequests)
 		}
+		
+		api.GET("/images/:id", adminHandler.ServeImage)
 	}
 
 	staticDir := os.Getenv("STATIC_DIR")

@@ -171,3 +171,12 @@ RETURNING *;
 -- name: ListCustomRequests :many
 SELECT * FROM custom_requests
 ORDER BY created_at DESC;
+
+-- name: SaveImage :one
+INSERT INTO stored_images (content_type, image_data)
+VALUES ($1, $2)
+RETURNING id;
+
+-- name: GetImage :one
+SELECT content_type, image_data FROM stored_images
+WHERE id = $1;

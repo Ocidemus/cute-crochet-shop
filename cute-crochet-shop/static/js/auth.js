@@ -187,13 +187,12 @@ const auth = {
         if (isAuthenticated && user) {
             // Logged in user profile & logout
             let displayName = user.name || user.username || 'User';
-            if (displayName.length > 12) {
-                displayName = displayName.substring(0, 12) + '...';
-            }
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
-                <a href="/profile" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">👤 ${displayName}</a>
+                <a href="/profile" title="${displayName}" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px; max-width: 160px; min-width: 0;">
+                    👤 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; flex: 1; min-width: 0;">${displayName}</span>
+                </a>
                 <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;
             navLinks.appendChild(profileLi);

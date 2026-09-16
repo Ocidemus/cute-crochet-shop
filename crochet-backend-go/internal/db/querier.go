@@ -43,6 +43,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (Users, error)
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	GetAddressByID(ctx context.Context, id pgtype.UUID) (Addresses, error)
+	GetImage(ctx context.Context, id pgtype.UUID) (GetImageRow, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (Orders, error)
 	GetOrderByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (Orders, error)
 	GetOrderItemsByOrderID(ctx context.Context, orderID pgtype.UUID) ([]GetOrderItemsByOrderIDRow, error)
@@ -59,6 +60,7 @@ type Querier interface {
 	ListAddressesByUserID(ctx context.Context, userID pgtype.UUID) ([]Addresses, error)
 	ListCustomRequests(ctx context.Context) ([]CustomRequests, error)
 	ListOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([]Orders, error)
+	SaveImage(ctx context.Context, arg SaveImageParams) (pgtype.UUID, error)
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) error
 	UpdateVariantStock(ctx context.Context, arg UpdateVariantStockParams) error

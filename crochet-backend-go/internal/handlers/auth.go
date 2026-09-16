@@ -343,6 +343,10 @@ func (h *AuthHandler) GoogleAuth(c *gin.Context) {
 		if userName == "" {
 			userName = strings.Split(tokenInfo.Email, "@")[0]
 		}
+		
+		if len(userName) > 15 {
+			userName = userName[:15]
+		}
 
 		user, err = h.Queries.CreateUser(ctx, db.CreateUserParams{
 			Name:         userName,

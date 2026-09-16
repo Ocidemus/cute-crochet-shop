@@ -353,6 +353,23 @@ func (q *Queries) GetAddressByID(ctx context.Context, id pgtype.UUID) (Addresses
 	return i, err
 }
 
+const getImage = `-- name: GetImage :one
+SELECT content_type, image_data FROM stored_images
+WHERE id = $1
+`
+
+type GetImageRow struct {
+	ContentType string `json:"content_type"`
+	ImageData   []byte `json:"image_data"`
+}
+
+func (q *Queries) GetImage(ctx context.Context, id pgtype.UUID) (GetImageRow, error) {
+	row := q.db.QueryRow(ctx, getImage, id)
+	var i GetImageRow
+	err := row.Scan(&i.ContentType, &i.ImageData)
+	return i, err
+}
+
 const getOrderByID = `-- name: GetOrderByID :one
 SELECT id, user_id, address_id, status, total_amount, razorpay_order_id, created_at FROM orders
 WHERE id = $1
@@ -829,6 +846,24 @@ func (q *Queries) ListOrdersByUserID(ctx context.Context, userID pgtype.UUID) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const saveImage = `-- name: SaveImage :one
+INSERT INTO stored_images (content_type, image_data)
+VALUES ($1, $2)
+RETURNING id
+`
+
+type SaveImageParams struct {
+	ContentType string `json:"content_type"`
+	ImageData   []byte `json:"image_data"`
+}
+
+func (q *Queries) SaveImage(ctx context.Context, arg SaveImageParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, saveImage, arg.ContentType, arg.ImageData)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateOrderStatus = `-- name: UpdateOrderStatus :exec

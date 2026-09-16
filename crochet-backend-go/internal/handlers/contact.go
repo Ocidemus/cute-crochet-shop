@@ -8,9 +8,8 @@ import (
 	"crochet-backend-go/internal/db"
 	"crochet-backend-go/internal/email"
 	"fmt"
-	"os"
+	"io"
 	"path/filepath"
-	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -100,19 +99,41 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 			return
 		}
 
-		// Ensure directory exists
-		uploadDir := "../cute-crochet-shop/static/assets/submissions"
-		os.MkdirAll(uploadDir, 0755)
+		// Read file into memory
+		f, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open image."})
+			return
+		}
+		defer f.Close()
+		
+		data, err := io.ReadAll(f)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image."})
+			return
+		}
 
-		// Generate UUID filename
-		filename := fmt.Sprintf("design-%s%s", uuid.New().String(), ext)
-		destPath := filepath.Join(uploadDir, filename)
-		if err := c.SaveUploadedFile(file, destPath); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image."})
+		contentType := file.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		
+		id, err := h.Queries.SaveImage(c.Request.Context(), db.SaveImageParams{
+			ContentType: contentType,
+			ImageData:   data,
+		})
+		
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image to db."})
 			return
 		}
 		
-		imageUrl = pgtype.Text{String: "/assets/submissions/" + filename, Valid: true}
+		var uuidStr string
+		if id.Valid {
+			uuidStr = fmt.Sprintf("%x-%x-%x-%x-%x", id.Bytes[0:4], id.Bytes[4:6], id.Bytes[6:8], id.Bytes[8:10], id.Bytes[10:16])
+		}
+		
+		imageUrl = pgtype.Text{String: "/api/images/" + uuidStr, Valid: true}
 	}
 
 	// 5. Store in Database

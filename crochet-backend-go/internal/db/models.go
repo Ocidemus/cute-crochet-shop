@@ -88,6 +88,13 @@ type Shipments struct {
 	ShippedAt      pgtype.Timestamptz `json:"shipped_at"`
 }
 
+type StoredImages struct {
+	ID          pgtype.UUID        `json:"id"`
+	ContentType string             `json:"content_type"`
+	ImageData   []byte             `json:"image_data"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Users struct {
 	ID           pgtype.UUID        `json:"id"`
 	Name         string             `json:"name"`
