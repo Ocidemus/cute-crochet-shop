@@ -191,7 +191,8 @@ const auth = {
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `
                 <a href="/profile" title="${displayName}" style="font-weight: 600; color: var(--primary-dark); margin-right: 12px; display: inline-flex; align-items: center; gap: 4px; max-width: 160px; min-width: 0;">
-                    👤 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; flex: 1; min-width: 0;">${displayName}</span>
+                    <svg class="icon-inline" style="width: 16px; height: 16px; flex-shrink: 0; stroke: var(--primary-dark); fill: none;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; flex: 1; min-width: 0;">${displayName}</span>
                 </a>
                 <button class="logout-btn" onclick="auth.logout()" style="padding: 4px 12px; font-size: 12px;">Logout</button>
             `;

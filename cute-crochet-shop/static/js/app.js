@@ -132,71 +132,8 @@ const app = {
     getProduct(id) {
         if (!id) return { name: 'Crochet Plushie', price: 499.00, images: ['assets/bears_colors.jpg'] };
         if (PRODUCTS[id]) return PRODUCTS[id];
-
-        if (id === 'duck') return PRODUCTS['cute'];
-
-        // Dynamic Bears variant lookup (e.g. bears-single-brown, bears-pair-pink)
-        if (id.startsWith('bears-') || id === 'bears') {
-            const parts = id.split('-');
-            const pack = parts[1] || 'single';
-            const color = parts[2] || 'brown';
-
-            const packMap = {
-                'single': { name: 'Single Bear', price: 399.00, img: 'assets/bears_single.jpg' },
-                'pair': { name: 'Pair (2 Bears)', price: 699.00, img: 'assets/bears_pair.jpg' },
-                'set3': { name: 'Set of 3 Bears', price: 999.00, img: 'assets/bears_set.jpg' },
-                'set4': { name: 'Set of 4 Bears', price: 1249.00, img: 'assets/bears_set.jpg' }
-            };
-            const colorNames = {
-                'brown': 'Brown', 'white': 'White', 'beige': 'Beige', 'pink': 'Pink'
-            };
-
-            const pInfo = packMap[pack] || packMap['single'];
-            const colorName = colorNames[color] || 'Brown';
-
-            return {
-                id: id,
-                name: `Handcrafted Crochet Bears (${pInfo.name} - ${colorName})`,
-                price: pInfo.price,
-                description: `Custom handcrafted plush bear set in ${colorName}.`,
-                images: [pInfo.img, 'assets/bears_colors.jpg']
-            };
-        }
-
-        // Dynamic Teddy variant lookup (e.g. teddy-single-white, teddy-pair-brown)
-        if (id.startsWith('teddy-') || id === 'teddy') {
-            const parts = id.split('-');
-            const pack = parts[1] || 'single';
-            const color = parts[2] || 'white';
-
-            const packMap = {
-                'single': { name: 'Single Teddy', price: 449.00, img: 'assets/teddy_1.jpg' },
-                'pair': { name: 'Pair (2 Teddies)', price: 799.00, img: 'assets/teddy_3.jpg' }
-            };
-            const colorNames = {
-                'white': 'White', 'brown': 'Brown'
-            };
-
-            const pInfo = packMap[pack] || packMap['single'];
-            const colorName = colorNames[color] || 'White';
-
-            return {
-                id: id,
-                name: `Cozy Teddy Bear (${pInfo.name} - ${colorName})`,
-                price: pInfo.price,
-                description: `Super soft crochet teddy bear in ${colorName}.`,
-                images: [pInfo.img, 'assets/teddy_2.jpg']
-            };
-        }
-
-        // Legacy mappings
-        if (id === 'brown-bear') return { id: 'brown-bear', name: 'Teddy Bear Plushie (Brown)', price: 399.00, images: ['assets/bears_single.jpg'] };
-        if (id === 'white-bear') return { id: 'white-bear', name: 'Teddy Bear Plushie (White)', price: 399.00, images: ['assets/bears_single.jpg'] };
-        if (id === 'pink-bear') return { id: 'pink-bear', name: 'Teddy Bear Plushie (Pink)', price: 399.00, images: ['assets/bears_single.jpg'] };
-        if (id === 'beige-bear') return { id: 'beige-bear', name: 'Teddy Bear Plushie (Beige)', price: 399.00, images: ['assets/bears_single.jpg'] };
-        if (id === 'tulips') return { id: 'tulips', name: 'Handmade Crochet Flowers', price: 499.00, images: ['assets/flowers_1.jpg'] };
-        if (id === 'heart') return { id: 'heart', name: 'Puffy Crochet Heart Keychain', price: 299.00, images: ['assets/hearts_1.jpg'] };
-
+        
+        // Fallback for missing products
         return {
             id: id,
             name: 'Cute Crochet Plushie',
@@ -274,26 +211,31 @@ const app = {
             if (res.ok && data.success) {
                 data.products.forEach(p => {
                     const prod = p.Products || p;
-                    // Skip if it's already in the hardcoded list to preserve custom logic
                     if (!PRODUCTS[prod.slug]) {
-                        PRODUCTS[prod.slug] = {
-                            id: prod.slug,
-                            name: prod.name,
-                            description: prod.description,
-                            price: parseFloat(prod.price),
-                            images: prod.images && prod.images.length > 0 ? prod.images : ['/assets/images/placeholder.jpg'],
-                            hasOptions: !!(prod.colors && prod.colors.length > 0)
-                        };
+                        PRODUCTS[prod.slug] = {};
+                    }
+                    
+                    // Always update from database to ensure fresh prices and data
+                    PRODUCTS[prod.slug].id = prod.slug;
+                    PRODUCTS[prod.slug].name = prod.name;
+                    if (prod.description) PRODUCTS[prod.slug].description = prod.description;
+                    PRODUCTS[prod.slug].price = parseFloat(prod.price);
+                    
+                    if (prod.images && prod.images.length > 0) {
+                        PRODUCTS[prod.slug].images = prod.images;
+                    } else if (!PRODUCTS[prod.slug].images) {
+                        PRODUCTS[prod.slug].images = ['/assets/images/placeholder.jpg'];
+                    }
 
-                        if (PRODUCTS[prod.slug].hasOptions) {
-                            PRODUCTS[prod.slug].colorOptions = prod.colors.map(c => ({
-                                label: c.trim(),
-                                value: c.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')
-                            }));
-                            PRODUCTS[prod.slug].packOptions = [
-                                { label: `Single (₹${parseFloat(prod.price)})`, value: 'single', price: parseFloat(prod.price) }
-                            ];
-                        }
+                    PRODUCTS[prod.slug].hasOptions = !!(prod.colors && prod.colors.length > 0);
+                    if (PRODUCTS[prod.slug].hasOptions) {
+                        PRODUCTS[prod.slug].colorOptions = prod.colors.map(c => ({
+                            label: c.trim(),
+                            value: c.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')
+                        }));
+                        PRODUCTS[prod.slug].packOptions = [
+                            { label: `Single (₹${parseFloat(prod.price)})`, value: 'single', price: parseFloat(prod.price) }
+                        ];
                     }
                 });
             }
