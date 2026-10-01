@@ -440,10 +440,16 @@ func (h *AdminHandler) DeleteProduct(c *gin.Context) {
 	pgProductID.Bytes = productID
 	pgProductID.Valid = true
 
+	// 1. Try hard delete first
 	err = h.Queries.DeleteProduct(ctx, pgProductID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product."})
-		return
+		// 2. If hard delete fails (e.g. because product was purchased in past order_items),
+		// perform soft delete so order history remains intact while product is removed from active store
+		softErr := h.Queries.SoftDeleteProduct(ctx, pgProductID)
+		if softErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product: " + softErr.Error()})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

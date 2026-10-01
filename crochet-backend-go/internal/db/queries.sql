@@ -48,6 +48,11 @@ RETURNING *;
 DELETE FROM products
 WHERE id = $1;
 
+-- name: SoftDeleteProduct :exec
+UPDATE products
+SET is_active = FALSE
+WHERE id = $1;
+
 -- name: ListActiveProducts :many
 SELECT * FROM products
 WHERE is_active = TRUE

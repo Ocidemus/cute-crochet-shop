@@ -331,6 +331,17 @@ func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const softDeleteProduct = `-- name: SoftDeleteProduct :exec
+UPDATE products
+SET is_active = FALSE
+WHERE id = $1
+`
+
+func (q *Queries) SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteProduct, id)
+	return err
+}
+
 const getAddressByID = `-- name: GetAddressByID :one
 SELECT id, user_id, line1, line2, city, state, pincode, is_default, created_at FROM addresses
 WHERE id = $1

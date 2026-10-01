@@ -42,6 +42,7 @@ type Querier interface {
 	// ============================================================================
 	CreateUser(ctx context.Context, arg CreateUserParams) (Users, error)
 	DeleteProduct(ctx context.Context, id pgtype.UUID) error
+	SoftDeleteProduct(ctx context.Context, id pgtype.UUID) error
 	GetAddressByID(ctx context.Context, id pgtype.UUID) (Addresses, error)
 	GetImage(ctx context.Context, id pgtype.UUID) (GetImageRow, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (Orders, error)

@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs
 
 import database
 
-JWT_SECRET = "cute_crochet_secret_token_key_2026_safe"
+JWT_SECRET = os.environ.get("JWT_SECRET", "cute_crochet_secret_token_key_2026_safe")
 PORT = 8080
 
 def base64url_encode(data: bytes) -> str:
