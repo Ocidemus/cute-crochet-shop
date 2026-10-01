@@ -2,6 +2,7 @@
 const adminPortal = {
     orders: [],
     products: [],
+    editingImages: [],
     currentFilter: 'ALL',
 
     escapeHTML(str) {
@@ -452,7 +453,38 @@ const adminPortal = {
         document.getElementById('edit-prod-desc').value = prod.description;
         document.getElementById('edit-prod-colors').value = prod.colors ? prod.colors.join(', ') : '';
 
+        this.editingImages = Array.isArray(prod.images) ? [...prod.images] : [];
+        this.renderEditImagePreviews();
+
+        const newImgInput = document.getElementById('edit-prod-new-img');
+        if (newImgInput) newImgInput.value = '';
+
         document.getElementById('edit-product-modal').style.display = 'flex';
+    },
+
+    renderEditImagePreviews() {
+        const container = document.getElementById('edit-prod-images-container');
+        if (!container) return;
+
+        if (!this.editingImages || this.editingImages.length === 0) {
+            container.innerHTML = '<p style="font-size: 12px; color: var(--text-muted); margin: 0;">No existing images.</p>';
+            return;
+        }
+
+        container.innerHTML = this.editingImages.map((imgUrl, idx) => `
+            <div style="position: relative; width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid var(--primary-light);">
+                <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Product image preview">
+                <button type="button" onclick="adminPortal.removeEditImage(${idx})" title="Remove image"
+                    style="position: absolute; top: 2px; right: 2px; background: rgba(216, 74, 103, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;">
+                    &times;
+                </button>
+            </div>
+        `).join('');
+    },
+
+    removeEditImage(idx) {
+        this.editingImages.splice(idx, 1);
+        this.renderEditImagePreviews();
     },
 
     async saveEditedProduct() {
@@ -461,16 +493,66 @@ const adminPortal = {
         const price = document.getElementById('edit-prod-price').value.trim();
         const desc = document.getElementById('edit-prod-desc').value.trim();
         const colorsRaw = document.getElementById('edit-prod-colors').value.trim();
+        const fileInput = document.getElementById('edit-prod-new-img');
+        const saveBtn = document.getElementById('btn-save-edit-prod');
 
         if (!name || !price || !desc) {
-            alert("Please fill all fields.");
+            alert("Please fill all required text fields.");
             return;
         }
 
         const prod = this.products.find(p => p.id === id);
         if (!prod) return;
 
+        let finalImages = [...this.editingImages];
+
+        // Upload any new images if selected
+        if (fileInput && fileInput.files.length > 0) {
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerText = 'Uploading images...';
+            }
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const formData = new FormData();
+                formData.append('image', fileInput.files[i]);
+                try {
+                    const res = await fetch('/api/admin/upload', {
+                        method: 'POST',
+                        headers: this.getAuthHeaders(),
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        finalImages.push(data.url);
+                    } else {
+                        alert(`Image upload failed for file ${fileInput.files[i].name}: ` + (data.error || "Unknown error"));
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.innerText = 'Save Changes';
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    alert(`Network error during image upload for ${fileInput.files[i].name}.`);
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.innerText = 'Save Changes';
+                    }
+                    return;
+                }
+            }
+        }
+
+        if (finalImages.length === 0) {
+            finalImages.push('/assets/images/placeholder.jpg');
+        }
+
         const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim()).filter(c => c) : [];
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Saving...';
+        }
 
         try {
             const res = await fetch(`/api/admin/products/${id}`, {
@@ -483,7 +565,7 @@ const adminPortal = {
                     name,
                     price: parseFloat(price),
                     description: desc,
-                    images: prod.images,
+                    images: finalImages,
                     colors: colors
                 })
             });
@@ -497,6 +579,11 @@ const adminPortal = {
             }
         } catch (err) {
             alert("Network error updating product.");
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Save Changes';
+            }
         }
     }
 };
