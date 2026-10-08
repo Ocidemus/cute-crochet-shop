@@ -121,8 +121,8 @@ const app = {
     cart: [],
 
     async init() {
-        this.loadCart();
         await this.fetchDynamicProducts();
+        this.loadCart();
         this.renderProductGrid();
         this.setupEventListeners();
         this.updateCartBadge();
@@ -130,16 +130,28 @@ const app = {
 
     // Dynamic Product & Variant Resolver
     getProduct(id) {
-        if (!id) return { name: 'Crochet Plushie', price: 499.00, images: ['assets/bears_colors.jpg'] };
+        if (!id) return null;
         if (PRODUCTS[id]) return PRODUCTS[id];
         
-        // Fallback for missing products
-        return {
-            id: id,
-            name: 'Cute Crochet Plushie',
-            price: 499.00,
-            images: ['assets/bears_colors.jpg']
-        };
+        // 1. Try stripping pack/color variant suffixes (e.g. 'slug-single-brown' or 'uuid-single-brown')
+        const parts = String(id).split('-');
+        while (parts.length > 1) {
+            parts.pop();
+            const baseKey = parts.join('-');
+            if (PRODUCTS[baseKey]) {
+                return PRODUCTS[baseKey];
+            }
+        }
+
+        // 2. Search PRODUCTS by matching id or slug property
+        for (const k in PRODUCTS) {
+            const p = PRODUCTS[k];
+            if (p && (p.id === id || p.slug === id || (typeof id === 'string' && id.startsWith(k)))) {
+                return p;
+            }
+        }
+
+        return null;
     },
 
     // Cart Management
@@ -175,6 +187,8 @@ const app = {
 
     async saveCartItem(productId, quantity, isUpdate = false) {
         const existingIdx = this.cart.findIndex(i => i.product_id === productId);
+        const resolved = this.getProduct(productId);
+
         if (existingIdx > -1) {
             if (quantity <= 0) {
                 this.cart.splice(existingIdx, 1);
@@ -184,14 +198,24 @@ const app = {
                 } else {
                     this.cart[existingIdx].quantity += quantity;
                 }
+                if (resolved) {
+                    this.cart[existingIdx].name = resolved.name;
+                    this.cart[existingIdx].price = resolved.price;
+                    if (resolved.images) this.cart[existingIdx].images = resolved.images;
+                }
             }
         } else if (quantity > 0) {
-            this.cart.push({ product_id: productId, quantity: quantity });
+            this.cart.push({
+                product_id: productId,
+                quantity: quantity,
+                name: resolved ? resolved.name : 'Crochet Item',
+                price: resolved ? resolved.price : 0.00,
+                images: resolved ? resolved.images : ['/assets/images/placeholder.jpg']
+            });
         }
         
         localStorage.setItem('crochet_local_cart', JSON.stringify(this.cart));
         this.updateCartBadge();
-        await this.fetchDynamicProducts();
         
         if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) {
             this.renderProductGrid();
@@ -211,32 +235,31 @@ const app = {
             if (res.ok && data.success) {
                 data.products.forEach(p => {
                     const prod = p.Products || p;
-                    if (!PRODUCTS[prod.slug]) {
-                        PRODUCTS[prod.slug] = {};
-                    }
-                    
-                    // Always update from database to ensure fresh prices and data
-                    PRODUCTS[prod.slug].id = prod.slug;
-                    PRODUCTS[prod.slug].name = prod.name;
-                    if (prod.description) PRODUCTS[prod.slug].description = prod.description;
-                    PRODUCTS[prod.slug].price = parseFloat(prod.price);
-                    
-                    if (prod.images && prod.images.length > 0) {
-                        PRODUCTS[prod.slug].images = prod.images;
-                    } else if (!PRODUCTS[prod.slug].images) {
-                        PRODUCTS[prod.slug].images = ['/assets/images/placeholder.jpg'];
-                    }
+                    const slugKey = prod.slug;
+                    const idKey = prod.id;
 
-                    PRODUCTS[prod.slug].hasOptions = !!(prod.colors && prod.colors.length > 0);
-                    if (PRODUCTS[prod.slug].hasOptions) {
-                        PRODUCTS[prod.slug].colorOptions = prod.colors.map(c => ({
+                    const prodObj = {
+                        id: prod.id || prod.slug,
+                        slug: prod.slug,
+                        name: prod.name,
+                        description: prod.description || '',
+                        price: parseFloat(prod.price),
+                        images: (prod.images && prod.images.length > 0) ? prod.images : ['/assets/images/placeholder.jpg'],
+                        hasOptions: !!(prod.colors && prod.colors.length > 0)
+                    };
+
+                    if (prodObj.hasOptions) {
+                        prodObj.colorOptions = prod.colors.map(c => ({
                             label: c.trim(),
                             value: c.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')
                         }));
-                        PRODUCTS[prod.slug].packOptions = [
+                        prodObj.packOptions = [
                             { label: `Single (₹${parseFloat(prod.price)})`, value: 'single', price: parseFloat(prod.price) }
                         ];
                     }
+
+                    if (slugKey) PRODUCTS[slugKey] = prodObj;
+                    if (idKey) PRODUCTS[idKey] = prodObj;
                 });
             }
         } catch (err) {
@@ -612,19 +635,21 @@ const app = {
         
         this.cart.forEach(item => {
             const product = this.getProduct(item.product_id);
-            if (!product) return;
+            const name = product ? product.name : (item.name || item.product_id);
+            const price = product ? product.price : (item.price || 0.00);
+            const images = (product && product.images && product.images.length > 0) ? product.images : (item.images || ['/assets/images/placeholder.jpg']);
             
-            const lineTotal = product.price * item.quantity;
+            const lineTotal = price * item.quantity;
             subtotal += lineTotal;
             
-            const thumbImg = (product.images && product.images.length > 0) ? product.images[0] : 'assets/bears_colors.jpg';
+            const thumbImg = images[0] || '/assets/images/placeholder.jpg';
             
             itemsHtml += `
                 <div class="cart-item-row">
-                    <img src="${thumbImg}" alt="${product.name}" class="cart-item-img">
+                    <img src="${thumbImg}" alt="${name}" class="cart-item-img">
                     <div class="cart-item-details">
-                        <h3 class="cart-item-name">${product.name}</h3>
-                        <p class="cart-item-price">₹${product.price.toFixed(2)}</p>
+                        <h3 class="cart-item-name">${name}</h3>
+                        <p class="cart-item-price">₹${price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-quantity">
                         <button class="qty-btn" onclick="app.saveCartItem('${item.product_id}', ${item.quantity - 1}, true)">-</button>

@@ -148,10 +148,10 @@ window.profile = {
         let total = 0;
         let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
         cart.forEach(item => {
-            const prod = window.app.getProduct(item.product_id);
-            const prodPrice = prod ? prod.price : (item.price || 499.00);
-            const prodName = prod ? prod.name : item.product_id;
-            const prodImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : 'assets/bears_colors.jpg';
+            const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : null;
+            const prodPrice = prod ? prod.price : (item.price || 0.00);
+            const prodName = prod ? prod.name : (item.name || item.product_id);
+            const prodImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : (item.images && item.images[0] ? item.images[0] : '/assets/images/placeholder.jpg');
             const subtotal = prodPrice * item.quantity;
             total += subtotal;
 

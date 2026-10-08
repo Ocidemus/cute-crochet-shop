@@ -89,18 +89,19 @@ const checkout = {
         const productsCatalog = (window.app && window.app.PRODUCTS) || window.PRODUCTS || {};
 
         this.cart.forEach(item => {
-            const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || { name: item.product_id, price: 499.00 });
-            const price = prod ? prod.price : (item.price || 499.00);
+            const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : (productsCatalog[item.product_id] || null);
+            const name = prod ? prod.name : (item.name || item.product_id);
+            const price = prod ? prod.price : (item.price || 0.00);
             const lineTotal = price * item.quantity;
             this.subtotal += lineTotal;
-            const thumbImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : 'assets/bears_colors.jpg';
+            const thumbImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : (item.images && item.images[0] ? item.images[0] : '/assets/images/placeholder.jpg');
 
             itemsHtml += `
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--primary-light);">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="${thumbImg}" alt="${prod.name}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;">
+                        <img src="${thumbImg}" alt="${name}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;">
                         <div>
-                            <span style="font-weight: 600; color: var(--primary-dark);">${prod.name}</span>
+                            <span style="font-weight: 600; color: var(--primary-dark);">${name}</span>
                             <br><span style="font-size: 11px; color: var(--text-muted);">Qty: ${item.quantity} × ₹${price.toFixed(2)}</span>
                         </div>
                     </div>
@@ -211,11 +212,12 @@ const checkout = {
 
             try {
                 const itemsPayload = this.cart.map(item => {
-                    const prod = window.app.getProduct(item.product_id);
+                    const prod = (window.app && window.app.getProduct) ? window.app.getProduct(item.product_id) : null;
+                    const itemPrice = prod ? prod.price : (item.price || 0.00);
                     return {
                         product_id: item.product_id,
                         quantity: item.quantity,
-                        price: prod ? prod.price : 499.00
+                        price: itemPrice
                     };
                 });
 
