@@ -155,13 +155,21 @@ window.profile = {
             const subtotal = prodPrice * item.quantity;
             total += subtotal;
 
+            const variantParts = [];
+            if (item.packLabel) variantParts.push(item.packLabel);
+            if (item.colorLabel) variantParts.push(item.colorLabel);
+            const variantLine = variantParts.length > 0
+                ? `<p style="font-size: 11px; margin: 3px 0 0; display: flex; flex-wrap: wrap; gap: 4px;">${variantParts.map(t => `<span style="background: #FFE0EA; color: #8B3A52; font-weight: 600; padding: 1px 7px; border-radius: 20px; font-size: 10.5px;">${t}</span>`).join('')}</p>`
+                : '';
+
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; background: #FFF5F7; padding: 10px 14px; border-radius: 10px; border: 1px solid #FFD6E0;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <img src="${prodImg}" alt="${prodName}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px;">
                         <div>
                             <p style="font-weight: 600; font-size: 14px; margin: 0; color: var(--primary-dark);">${prodName}</p>
-                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Qty: ${item.quantity} × ₹${prodPrice.toFixed(2)}</p>
+                            ${variantLine}
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0;">Qty: ${item.quantity} × ₹${prodPrice.toFixed(2)}</p>
                         </div>
                     </div>
                     <span style="font-weight: 700; font-size: 14px; color: var(--primary);">₹${subtotal.toFixed(2)}</span>

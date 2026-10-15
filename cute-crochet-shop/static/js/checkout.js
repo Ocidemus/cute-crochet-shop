@@ -96,13 +96,20 @@ const checkout = {
             this.subtotal += lineTotal;
             const thumbImg = (prod && prod.images && prod.images[0]) ? prod.images[0] : (item.images && item.images[0] ? item.images[0] : '/assets/images/placeholder.jpg');
 
+            const variantParts = [];
+            if (item.packLabel) variantParts.push(item.packLabel);
+            if (item.colorLabel) variantParts.push(item.colorLabel);
+            const variantTagsHtml = variantParts.length > 0
+                ? `<span style="display:inline-flex; flex-wrap:wrap; gap:3px; margin-top:2px;">${variantParts.map(t => `<span style="background:#FFE0EA; color:#8B3A52; font-weight:600; padding:1px 6px; border-radius:20px; font-size:10px;">${t}</span>`).join('')}</span><br>`
+                : '';
+
             itemsHtml += `
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--primary-light);">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <img src="${thumbImg}" alt="${name}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;">
                         <div>
-                            <span style="font-weight: 600; color: var(--primary-dark);">${name}</span>
-                            <br><span style="font-size: 11px; color: var(--text-muted);">Qty: ${item.quantity} × ₹${price.toFixed(2)}</span>
+                            <span style="font-weight: 600; color: var(--primary-dark);">${name}</span><br>
+                            ${variantTagsHtml}<span style="font-size: 11px; color: var(--text-muted);">Qty: ${item.quantity} × ₹${price.toFixed(2)}</span>
                         </div>
                     </div>
                     <span style="font-weight: 700; color: var(--primary);">₹${lineTotal.toFixed(2)}</span>

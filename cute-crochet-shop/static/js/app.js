@@ -185,9 +185,16 @@ const app = {
         }
     },
 
-    async saveCartItem(productId, quantity, isUpdate = false) {
+    async saveCartItem(productId, quantity, isUpdate = false, colorLabel = null, packLabel = null) {
         const existingIdx = this.cart.findIndex(i => i.product_id === productId);
         const resolved = this.getProduct(productId);
+
+        // Resolve price: check pack options for a price matching this variant
+        let resolvedPrice = resolved ? resolved.price : 0.00;
+        if (resolved && resolved.packOptions && packLabel) {
+            const matchedPack = resolved.packOptions.find(o => o.label === packLabel);
+            if (matchedPack) resolvedPrice = matchedPack.price;
+        }
 
         if (existingIdx > -1) {
             if (quantity <= 0) {
@@ -200,17 +207,22 @@ const app = {
                 }
                 if (resolved) {
                     this.cart[existingIdx].name = resolved.name;
-                    this.cart[existingIdx].price = resolved.price;
+                    this.cart[existingIdx].price = resolvedPrice;
                     if (resolved.images) this.cart[existingIdx].images = resolved.images;
                 }
+                // Preserve labels if already stored and not being overwritten
+                if (colorLabel !== null) this.cart[existingIdx].colorLabel = colorLabel;
+                if (packLabel !== null) this.cart[existingIdx].packLabel = packLabel;
             }
         } else if (quantity > 0) {
             this.cart.push({
                 product_id: productId,
                 quantity: quantity,
                 name: resolved ? resolved.name : 'Crochet Item',
-                price: resolved ? resolved.price : 0.00,
-                images: resolved ? resolved.images : ['/assets/images/placeholder.jpg']
+                price: resolvedPrice,
+                images: resolved ? resolved.images : ['/assets/images/placeholder.jpg'],
+                colorLabel: colorLabel || null,
+                packLabel: packLabel || null
             });
         }
         
@@ -299,20 +311,36 @@ const app = {
 
     addToCart(productId, quantity = 1) {
         let finalProductId = productId;
+        let colorLabel = null;
+        let packLabel = null;
         const prodObj = PRODUCTS[productId];
         
         if (prodObj && prodObj.hasOptions) {
             const packSelect = document.getElementById(`pack-${productId}`);
             const colorSelect = document.getElementById(`color-${productId}`);
             const packVal = packSelect ? packSelect.value : 'single';
-            const colorVal = colorSelect ? colorSelect.value : 'brown';
-            finalProductId = `${productId}-${packVal}-${colorVal}`;
+            const colorVal = colorSelect ? colorSelect.value : null;
+            finalProductId = colorVal ? `${productId}-${packVal}-${colorVal}` : `${productId}-${packVal}`;
+
+            // Extract human-readable labels from selected options
+            if (packSelect && packSelect.selectedIndex >= 0) {
+                packLabel = packSelect.options[packSelect.selectedIndex].text;
+            } else if (prodObj.packOptions) {
+                const match = prodObj.packOptions.find(o => o.value === packVal);
+                if (match) packLabel = match.label;
+            }
+            if (colorVal && colorSelect && colorSelect.selectedIndex >= 0) {
+                colorLabel = colorSelect.options[colorSelect.selectedIndex].text;
+            } else if (colorVal && prodObj.colorOptions) {
+                const match = prodObj.colorOptions.find(o => o.value === colorVal);
+                if (match) colorLabel = match.label;
+            }
         }
         
-        this.saveCartItem(finalProductId, quantity, false);
+        this.saveCartItem(finalProductId, quantity, false, colorLabel, packLabel);
         
         const resolved = this.getProduct(finalProductId);
-        this.showToast(`Added ${quantity}x ${resolved.name} to your cart!`);
+        this.showToast(`Added ${quantity}x ${resolved ? resolved.name : 'item'} to your cart!`);
     },
 
     updateCardActionUI(prodId) {
@@ -644,11 +672,20 @@ const app = {
             
             const thumbImg = images[0] || '/assets/images/placeholder.jpg';
             
+            // Build variant tags (color + pack) if they were snapshotted at add-to-cart time
+            const variantTags = [];
+            if (item.packLabel) variantTags.push(item.packLabel);
+            if (item.colorLabel) variantTags.push(item.colorLabel);
+            const variantTagsHtml = variantTags.length > 0
+                ? variantTags.map(tag => `<span class="cart-variant-tag">${tag}</span>`).join('')
+                : '';
+
             itemsHtml += `
                 <div class="cart-item-row">
                     <img src="${thumbImg}" alt="${name}" class="cart-item-img">
                     <div class="cart-item-details">
                         <h3 class="cart-item-name">${name}</h3>
+                        ${variantTagsHtml ? `<div class="cart-variant-tags">${variantTagsHtml}</div>` : ''}
                         <p class="cart-item-price">₹${price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-quantity">
