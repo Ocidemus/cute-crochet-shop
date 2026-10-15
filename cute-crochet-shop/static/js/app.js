@@ -665,9 +665,12 @@ const app = {
         
         this.cart.forEach(item => {
             const product = this.getProduct(item.product_id);
-            const name = product ? product.name : (item.name || item.product_id);
-            const price = product ? product.price : (item.price || 0.00);
-            const images = (product && product.images && product.images.length > 0) ? product.images : (item.images || ['/assets/images/placeholder.jpg']);
+            // Prefer snapshot values saved at addToCart time
+            const name   = item.name  || (product ? product.name  : item.product_id);
+            const price  = item.price || (product ? product.price : 0.00);
+            const images = (item.images && item.images.length > 0) ? item.images
+                         : (product && product.images && product.images.length > 0) ? product.images
+                         : ['/assets/images/placeholder.jpg'];
             
             const lineTotal = price * item.quantity;
             subtotal += lineTotal;
