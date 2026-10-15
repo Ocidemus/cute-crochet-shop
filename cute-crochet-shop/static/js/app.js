@@ -347,14 +347,15 @@ const app = {
         const actionGroup = document.getElementById(`action-group-${prodId}`);
         if (!actionGroup) return;
 
+        // Build finalProductId the same way addToCart does — no hardcoded color fallback
         let finalProductId = prodId;
         const prodObj = PRODUCTS[prodId];
         if (prodObj && prodObj.hasOptions) {
             const packSelect = document.getElementById(`pack-${prodId}`);
             const colorSelect = document.getElementById(`color-${prodId}`);
             const packVal = packSelect ? packSelect.value : 'single';
-            const colorVal = colorSelect ? colorSelect.value : 'brown';
-            finalProductId = `${prodId}-${packVal}-${colorVal}`;
+            const colorVal = colorSelect ? colorSelect.value : null;
+            finalProductId = colorVal ? `${prodId}-${packVal}-${colorVal}` : `${prodId}-${packVal}`;
         }
 
         const cartItem = this.cart.find(i => i.product_id === finalProductId);
@@ -377,8 +378,9 @@ const app = {
                 </div>
             `;
         } else {
+            // Call addToCart (not saveCartItem) so color/pack labels are always captured
             actionGroup.innerHTML = `
-                <button class="btn-add-cart" style="border-radius: 8px; padding: 8px 16px; font-weight: bold;" title="Add to Basket" onclick="app.saveCartItem('${finalProductId}', 1, false); app.updateCardActionUI('${prodId}'); app.showToast('Added to your cart!')">
+                <button class="btn-add-cart" style="border-radius: 8px; padding: 8px 16px; font-weight: bold;" title="Add to Basket" onclick="app.addToCart('${prodId}')">
                     Buy
                 </button>
             `;
