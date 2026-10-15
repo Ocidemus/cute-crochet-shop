@@ -159,8 +159,9 @@ window.profile = {
             total += subtotal;
 
             const variantParts = [];
-            if (item.packLabel) variantParts.push(item.packLabel);
-            if (item.colorLabel) variantParts.push(item.colorLabel);
+            const variantLbls = (window.app && window.app.getVariantLabels) ? window.app.getVariantLabels(item) : { colorLabel: item.colorLabel, packLabel: item.packLabel };
+            if (variantLbls.packLabel) variantParts.push(variantLbls.packLabel);
+            if (variantLbls.colorLabel) variantParts.push(variantLbls.colorLabel);
             const variantLine = variantParts.length > 0
                 ? `<p style="font-size: 11px; margin: 3px 0 0; display: flex; flex-wrap: wrap; gap: 4px;">${variantParts.map(t => `<span style="background: #FFE0EA; color: #8B3A52; font-weight: 600; padding: 1px 7px; border-radius: 20px; font-size: 10.5px;">${t}</span>`).join('')}</p>`
                 : '';

@@ -154,6 +154,49 @@ const app = {
         return null;
     },
 
+    // Extract human-readable color/pack labels from a cart item.
+    // First checks saved snapshots (new items), then falls back to
+    // parsing the product_id suffix against the base product's options (old items).
+    getVariantLabels(item) {
+        const colorLabel = item.colorLabel || null;
+        const packLabel  = item.packLabel  || null;
+        if (colorLabel || packLabel) return { colorLabel, packLabel };
+
+        // Fallback: decode suffix from product_id string e.g. "bears-pair-brown"
+        const base = this.getProduct(item.product_id);
+        if (!base || !base.hasOptions) return { colorLabel: null, packLabel: null };
+
+        // The suffix is everything after the base product's id/slug
+        const baseId  = base.slug || base.id || '';
+        const suffix  = String(item.product_id).replace(new RegExp('^' + baseId + '-?'), '');
+        if (!suffix) return { colorLabel: null, packLabel: null };
+
+        let resolvedPack = null, resolvedColor = null;
+
+        // Try each packOption value as a prefix of the suffix
+        if (base.packOptions) {
+            for (const opt of base.packOptions) {
+                if (suffix === opt.value || suffix.startsWith(opt.value + '-')) {
+                    resolvedPack = opt.label;
+                    const colorVal = suffix.slice(opt.value.length).replace(/^-/, '');
+                    if (colorVal && base.colorOptions) {
+                        const co = base.colorOptions.find(c => c.value === colorVal);
+                        if (co) resolvedColor = co.label;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // If no pack match, try matching the whole suffix as a color value directly
+        if (!resolvedPack && base.colorOptions) {
+            const co = base.colorOptions.find(c => c.value === suffix);
+            if (co) resolvedColor = co.label;
+        }
+
+        return { colorLabel: resolvedColor, packLabel: resolvedPack };
+    },
+
     // Cart Management
     getCart() {
         if (!this.cart || !Array.isArray(this.cart)) {
@@ -677,10 +720,11 @@ const app = {
             
             const thumbImg = images[0] || '/assets/images/placeholder.jpg';
             
-            // Build variant tags (color + pack) if they were snapshotted at add-to-cart time
+            // Resolve color/pack labels — works for new (snapshot) and old (suffix-parsed) items
+            const { colorLabel, packLabel } = this.getVariantLabels(item);
             const variantTags = [];
-            if (item.packLabel) variantTags.push(item.packLabel);
-            if (item.colorLabel) variantTags.push(item.colorLabel);
+            if (packLabel) variantTags.push(packLabel);
+            if (colorLabel) variantTags.push(colorLabel);
             const variantTagsHtml = variantTags.length > 0
                 ? variantTags.map(tag => `<span class="cart-variant-tag">${tag}</span>`).join('')
                 : '';
