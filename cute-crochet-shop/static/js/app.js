@@ -300,7 +300,8 @@ const app = {
                         description: prod.description || '',
                         price: parseFloat(prod.price),
                         images: (prod.images && prod.images.length > 0) ? prod.images : ['/assets/images/placeholder.jpg'],
-                        hasOptions: !!(prod.colors && prod.colors.length > 0)
+                        hasOptions: !!(prod.colors && prod.colors.length > 0),
+                        fromDB: true   // ← marks this product as admin-managed / DB-sourced
                     };
 
                     if (prodObj.hasOptions) {
@@ -458,7 +459,32 @@ const app = {
         if (!grid) return;
         
         grid.innerHTML = '';
-        Object.values(PRODUCTS).forEach(prod => {
+
+        // Only render DB-sourced products (fromDB: true).
+        // Static/hardcoded products remain available for cart resolution but are not shown.
+        const dbProducts = Object.values(PRODUCTS).filter(p => p.fromDB === true);
+
+        // De-duplicate: same product is keyed by both slug AND uuid, only render once
+        const seen = new Set();
+        const uniqueProducts = dbProducts.filter(p => {
+            const key = p.slug || p.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+
+        if (uniqueProducts.length === 0) {
+            grid.innerHTML = `
+                <div style="text-align:center; padding: 60px 20px; color: var(--text-muted); grid-column: 1/-1;">
+                    <svg style="width:64px;height:64px;opacity:0.3;margin-bottom:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    <p style="font-size:18px;font-weight:700;font-family:var(--font-heading);">No products available right now</p>
+                    <p style="font-size:14px;margin-top:6px;">Check back soon — new handcrafted items are being added!</p>
+                </div>
+            `;
+            return;
+        }
+
+        uniqueProducts.forEach(prod => {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.id = `card-${prod.id}`;
