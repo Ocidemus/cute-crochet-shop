@@ -272,16 +272,18 @@ const checkout = {
                     }
                 } else {
                     loader.classList.remove('active');
-                    if (data.error === "PRICE_MISMATCH") {
-                        if (errorEl) {
-                            errorEl.textContent = data.message;
-                            errorEl.style.display = 'block';
-                            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                        // Refresh page after a brief delay to show the new prices
-                        setTimeout(() => window.location.reload(), 4000);
+
+                    const isStaleCart = data.error === "PRICE_MISMATCH"
+                        || (typeof data.error === 'string' && data.error.includes('not found'))
+                        || (typeof data.error === 'string' && data.error.includes('Insufficient stock'));
+
+                    if (isStaleCart) {
+                        // Show a prominent countdown overlay, then redirect to home
+                        const msg = data.message || data.error || "Some items in your cart are no longer available.";
+                        this.showRedirectOverlay(msg);
                         return;
                     }
+
                     if (errorEl) {
                         errorEl.textContent = data.error || "Failed to initiate payment order.";
                         errorEl.style.display = 'block';
@@ -395,6 +397,70 @@ const checkout = {
             loader.classList.remove('active');
             alert("Network error verifying payment.");
         }
+    },
+
+    showRedirectOverlay(message) {
+        // Clear the stale cart so user starts fresh on the homepage
+        localStorage.removeItem('crochet_local_cart');
+        if (window.app && window.app.cart) window.app.cart = [];
+        if (window.app && window.app.updateCartBadge) window.app.updateCartBadge();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'checkout-redirect-overlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(90, 20, 40, 0.72);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+        `;
+
+        let seconds = 5;
+        overlay.innerHTML = `
+            <div style="
+                background: #fff;
+                border-radius: 20px;
+                padding: 40px 36px;
+                max-width: 440px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(90,20,40,0.35);
+                animation: pop 0.35s ease;
+                font-family: var(--font-heading, 'Nunito', sans-serif);
+            ">
+                <div style="font-size: 48px; margin-bottom: 12px;">🛒</div>
+                <h2 style="color: #B25866; font-size: 20px; margin-bottom: 10px;">Your cart needs updating</h2>
+                <p style="color: #5A3A40; font-size: 14px; font-weight: 500; line-height: 1.6; margin-bottom: 24px;">
+                    ${message}
+                </p>
+                <div style="
+                    width: 60px; height: 60px; border-radius: 50%;
+                    background: #FFE0EA; border: 3px solid #B25866;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 26px; font-weight: 800; color: #B25866;
+                    margin: 0 auto 20px;
+                " id="redirect-countdown">${seconds}</div>
+                <p style="font-size: 12px; color: #9B6B72;">Redirecting you to the shop in a moment…</p>
+                <button onclick="window.location.href='/'" style="
+                    margin-top: 20px;
+                    background: #B25866; color: white;
+                    border: none; border-radius: 30px;
+                    padding: 10px 28px; font-size: 14px; font-weight: 700;
+                    cursor: pointer; font-family: inherit;
+                ">Go to Shop Now →</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const countdownEl = document.getElementById('redirect-countdown');
+        const timer = setInterval(() => {
+            seconds--;
+            if (countdownEl) countdownEl.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                window.location.href = '/';
+            }
+        }, 1000);
     },
 
     showErrorNotification(message, fieldIds = []) {
