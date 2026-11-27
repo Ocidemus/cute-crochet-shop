@@ -184,7 +184,10 @@
             <div>
                 <button class="filter-btn active" id="tab-orders" onclick="adminPortal.switchTab('orders')" style="margin-right: 10px;">Orders</button>
                 <button class="filter-btn" id="tab-products" onclick="adminPortal.switchTab('products')" style="margin-right: 10px;">Products</button>
-                <button class="filter-btn" id="tab-requests" onclick="adminPortal.switchTab('requests')">Custom Requests</button>
+                <button class="filter-btn" id="tab-requests" onclick="adminPortal.switchTab('requests')">
+                    Custom Requests
+                    <span id="requests-badge" style="display: none; background: #FFE0EA; color: #8B3A52; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 800; margin-left: 5px;">0</span>
+                </button>
             </div>
         </div>
         
@@ -371,7 +374,7 @@
     <!-- Scripts -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="/js/auth.js?v=4.0"></script>
-    <script src="/js/app.js?v=4.0"></script>
-    <script src="/js/admin.js?v=4.0"></script>
+    <script src="/js/app.js?v=5.0"></script>
+    <script src="/js/admin.js?v=5.0"></script>
 </body>
 </html>

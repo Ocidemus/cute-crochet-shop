@@ -57,18 +57,22 @@ const adminPortal = {
 
     async fetchRequests() {
         const tbody = document.getElementById('requests-table-body');
+        const badge = document.getElementById('requests-badge');
+        if (!tbody) return;
         try {
             const res = await fetch('/api/admin/requests', { headers: this.getAuthHeaders() });
             const data = await res.json();
             if (res.ok && data.success) {
                 if (!data.requests || data.requests.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No custom requests yet.</td></tr>';
-                    document.getElementById('requests-badge').style.display = 'none';
+                    if (badge) badge.style.display = 'none';
                     return;
                 }
                 
-                document.getElementById('requests-badge').style.display = 'inline-block';
-                document.getElementById('requests-badge').textContent = data.requests.length;
+                if (badge) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = data.requests.length;
+                }
 
                 tbody.innerHTML = data.requests.map(req => {
                     const date = new Date(req.created_at).toLocaleDateString('en-IN', {
@@ -76,8 +80,15 @@ const adminPortal = {
                         hour: '2-digit', minute: '2-digit'
                     });
                     
-                    const imgHtml = req.image_url && req.image_url.Valid && req.image_url.String
-                        ? `<a href="${req.image_url.String}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">View Image</a>`
+                    const rawImgUrl = typeof req.image_url === 'string'
+                        ? req.image_url
+                        : (req.image_url && req.image_url.Valid && req.image_url.String ? req.image_url.String : '');
+
+                    const imgHtml = rawImgUrl
+                        ? `<a href="${rawImgUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 600; text-decoration: underline;">
+                               <img src="${rawImgUrl}" alt="Custom reference" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--primary-light);">
+                               <span>View Full Image</span>
+                           </a>`
                         : `<span style="color: var(--text-muted);">No image</span>`;
                         
                     return `
