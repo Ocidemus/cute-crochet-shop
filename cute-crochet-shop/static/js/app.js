@@ -3,18 +3,69 @@
 const PRODUCTS = {
     'custom-design': {
         id: 'custom-design',
+        slug: 'custom-design',
         name: 'Request Custom Design',
         description: 'Have a specific design in mind? Let us know and we will craft it for you! We will contact you once the design is approved.',
         price: 0,
         images: ['/assets/custom_design.png'],
-        hasOptions: false
+        hasOptions: false,
+        fromDB: true
+    },
+    'four-bear-combo': {
+        id: 'four-bear-combo',
+        slug: 'four-bear-combo',
+        name: '4 Bear Family Combo Set',
+        price: 1249.00,
+        description: 'Complete set of 4 handcrafted pastel plush bears (Chocolate Brown, Vanilla White, Pastel Pink & Sandy Beige) with cute bow ribbons.',
+        images: ['assets/four_bear_combo_1.jpg', 'assets/four_bear_combo_2.jpg', 'assets/four_bear_combo_3.jpg', 'assets/four_bear_combo_4.jpg']
+    },
+    'brown-white-bear-combo': {
+        id: 'brown-white-bear-combo',
+        slug: 'brown-white-bear-combo',
+        name: 'Brown & White Bear Duo Combo',
+        price: 699.00,
+        description: 'Matching pair of chocolate brown and vanilla white plush teddy bears with sweet ribbon bows.',
+        images: ['assets/brown_white_bear_1.jpg', 'assets/brown_white_bear_2.jpg', 'assets/brown_white_bear_3.jpg', 'assets/brown_white_bear_4.jpg']
+    },
+    'brown-bear': {
+        id: 'brown-bear',
+        slug: 'brown-bear',
+        name: 'Chocolate Brown Teddy Bear',
+        price: 399.00,
+        description: 'Classic chocolate brown velvet teddy bear plushie wearing a cute white bow ribbon.',
+        images: ['assets/brown_bear_1.jpg', 'assets/brown_bear_2.jpg', 'assets/brown_bear_3.jpg', 'assets/brown_bear_4.jpg']
+    },
+    'white-bear': {
+        id: 'white-bear',
+        slug: 'white-bear',
+        name: 'Vanilla White Teddy Bear',
+        price: 399.00,
+        description: 'Dreamy vanilla white velvet teddy bear plushie with a pastel pink bow ribbon and rosy cheeks.',
+        images: ['assets/white_bear_1.jpg', 'assets/white_bear_2.jpg', 'assets/white_bear_3.jpg']
+    },
+    'pink-bear': {
+        id: 'pink-bear',
+        slug: 'pink-bear',
+        name: 'Pastel Pink Teddy Bear',
+        price: 399.00,
+        description: 'Sweet pastel pink velvet teddy bear plushie with a white bow ribbon, ultra-soft and huggable.',
+        images: ['assets/pink_bear_1.jpg', 'assets/pink_bear_2.jpg']
+    },
+    'beige-bear': {
+        id: 'beige-bear',
+        slug: 'beige-bear',
+        name: 'Sandy Beige Teddy Bear',
+        price: 399.00,
+        description: 'Warm sandy beige velvet teddy bear plushie wearing a pastel pink bow ribbon.',
+        images: ['assets/beige_bear.jpg', 'assets/four_bear_combo_1.jpg']
     },
     'bears': {
         id: 'bears',
-        name: 'Handcrafted Crochet Bears',
+        slug: 'bears',
+        name: 'Custom Bear Pack (Choose Size & Color)',
         price: 399.00,
-        description: 'Custom handcrafted plush bears. Choose single, pair, or set of 3/4 in cute pastel colors.',
-        images: ['assets/bears_colors.jpg', 'assets/bears_single.jpg', 'assets/bears_pair.jpg', 'assets/bears_set.jpg', 'assets/bears_1.jpg', 'assets/bears_2.jpg', 'assets/bears_3.jpg'],
+        description: 'Customize your own handcrafted plush bear bundle! Choose single, pair, or set of 3/4 in your favorite pastel color.',
+        images: ['assets/bears_colors.jpg', 'assets/four_bear_combo_1.jpg', 'assets/brown_white_bear_1.jpg', 'assets/brown_bear_1.jpg', 'assets/white_bear_1.jpg'],
         hasOptions: true,
         packOptions: [
             { label: 'Single Bear (₹399)', value: 'single', price: 399.00 },
@@ -29,96 +80,191 @@ const PRODUCTS = {
             { label: 'Pastel Pink', value: 'pink' }
         ]
     },
-    'teddy': {
-        id: 'teddy',
-        name: 'Cozy Teddy Bear',
-        price: 449.00,
-        description: 'Super soft crochet teddy bear plushie wearing a cute ribbon.',
-        images: ['assets/teddy_1.jpg', 'assets/teddy_2.jpg', 'assets/teddy_3.jpg', 'assets/teddy_4.jpg', 'assets/teddy_5.jpg'],
-        hasOptions: true,
-        packOptions: [
-            { label: 'Single Teddy (₹449)', value: 'single', price: 449.00 },
-            { label: 'Pair / 2 Teddies (₹799)', value: 'pair', price: 799.00 }
-        ],
-        colorOptions: [
-            { label: 'Vanilla White', value: 'white' },
-            { label: 'Chocolate Brown', value: 'brown' }
-        ]
+    'trio-combo': {
+        id: 'trio-combo',
+        slug: 'trio-combo',
+        name: 'Cute Companions Trio Combo',
+        price: 899.00,
+        description: 'Adorable 3-piece plush keychain bundle featuring Creamy White Capybara, Earmuff Penguin, and Chubby Panda.',
+        images: ['assets/trio_combo_1.jpg', 'assets/trio_combo_2.jpg', 'assets/trio_combo_3.jpg', 'assets/trio_combo_4.jpg']
     },
-    'cute': {
-        id: 'cute',
-        name: 'Little Duck holding Flower',
-        price: 699.00,
-        description: 'Cute white chick/duck holding a pink flower. Adorable handmade desk buddy featuring full photo gallery.',
-        images: ['assets/cute_1.jpg', 'assets/cute_2.jpg', 'assets/cute_3.jpg', 'assets/cute_4.jpg']
+    'tulip-panda-combo': {
+        id: 'tulip-panda-combo',
+        slug: 'tulip-panda-combo',
+        name: 'Twin Pandas & White Tulip Combo Set',
+        price: 799.00,
+        description: 'Special gift set of two rosy-cheeked panda plush keychains paired with a double white tulip charm.',
+        images: ['assets/tulip_panda_combo_1.jpg', 'assets/tulip_panda_combo_2.jpg', 'assets/tulip_panda_combo_3.jpg', 'assets/tulip_panda_combo_4.jpg']
     },
     'panda': {
         id: 'panda',
-        name: 'Panda Crochet Keychain',
-        price: 799.00,
-        description: 'Super round and squishy panda keychain with rosy cheeks. Made with soft velvet yarn.',
-        images: ['assets/panda_1.jpg', 'assets/panda_2.jpg', 'assets/panda_3.jpg', 'assets/panda_4.jpg', 'assets/panda_5.jpg']
-    },
-    'capybara': {
-        id: 'capybara',
-        name: 'Capybara Plushie Keychain',
-        price: 899.00,
-        description: 'Squishy brown capybara plushie keychain with closed happy eyes.',
-        images: ['assets/capybara_1.jpg', 'assets/capybara_2.jpg', 'assets/capybara_3.jpg', 'assets/capybara_4.jpg']
-    },
-    'spiderman': {
-        id: 'spiderman',
-        name: 'Spiderman Crochet Keychain',
-        price: 599.00,
-        description: 'Handcrafted Spiderman hero crochet keychain with detailed mask pattern.',
-        images: ['assets/spiderman_1.jpg', 'assets/spiderman_2.jpg', 'assets/spiderman_3.jpg', 'assets/spiderman_4.jpg']
-    },
-    'bow': {
-        id: 'bow',
-        name: 'Crochet Ribbon Bow Keychain',
+        slug: 'panda',
+        name: 'Chubby Panda Plush Keychain',
         price: 349.00,
-        description: 'Cozy handmade crochet ribbon bow keychains in aesthetic pastel colors.',
-        images: ['assets/bow_1.jpg', 'assets/bow_2.jpg', 'assets/bow_3.jpg', 'assets/bow_4.jpg', 'assets/bow_5.jpg']
+        description: 'Super round and squishy panda keychain with rosy pink cheeks and happy stitched eyes.',
+        images: ['assets/panda_new_1.jpg', 'assets/panda_new_2.jpg', 'assets/panda_new_3.jpg', 'assets/panda_new_4.jpg', 'assets/panda_new_5.jpg']
     },
     'penguin': {
         id: 'penguin',
-        name: 'Mini Penguin Keychain',
-        price: 699.00,
-        description: 'Tiny penguin companion keychain featuring custom knit details and cute webbed feet.',
-        images: ['assets/penguin_1.jpg', 'assets/penguin_2.jpg']
+        slug: 'penguin',
+        name: 'Cozy Mini Penguin Keychain',
+        price: 349.00,
+        description: 'Tiny penguin companion keychain featuring custom knit details, orange beak, and cute webbed feet.',
+        images: ['assets/penguin_new_1.jpg', 'assets/penguin_new_2.jpg', 'assets/penguin_new_3.jpg', 'assets/penguin_new_4.jpg']
     },
-    'flowers': {
-        id: 'flowers',
-        name: 'Handmade Crochet Flowers',
-        price: 499.00,
-        description: 'Everlasting crochet flower stems and keychains made with love.',
-        images: ['assets/flowers_1.jpg', 'assets/flowers_2.jpg']
+    'capybara': {
+        id: 'capybara',
+        slug: 'capybara',
+        name: 'Chubby Brown Capybara Keychain',
+        price: 349.00,
+        description: 'Squishy brown capybara plushie keychain with closed happy eyes and cute little ears.',
+        images: ['assets/capybara_new_1.jpg', 'assets/capybara_new_2.jpg', 'assets/capybara_new_3.jpg', 'assets/capybara_new_4.jpg']
     },
-    'hearts': {
-        id: 'hearts',
-        name: 'Puffy Crochet Heart Keychain',
+    'white-capybara': {
+        id: 'white-capybara',
+        slug: 'white-capybara',
+        name: 'Creamy White Capybara Keychain',
+        price: 349.00,
+        description: 'Cozy cream-white capybara plush keychain with chocolate brown ears, paws, and sleepy eyes.',
+        images: ['assets/white_capybara_1.jpg', 'assets/white_capybara_2.jpg', 'assets/white_capybara_3.jpg', 'assets/white_capybara_4.jpg']
+    },
+    'white-teddy': {
+        id: 'white-teddy',
+        slug: 'white-teddy',
+        name: 'Mini White Panda Bear with Bow Tie',
+        price: 349.00,
+        description: 'Cute standing mini white bear keychain with black panda ears, rosy cheeks, and a dapper bow tie.',
+        images: ['assets/white_teddy_1.jpg', 'assets/white_teddy_2.jpg', 'assets/white_teddy_3.jpg', 'assets/white_teddy_4.jpg']
+    },
+    'duck-holding-flower': {
+        id: 'duck-holding-flower',
+        slug: 'duck-holding-flower',
+        name: 'Little Duck Holding Pink Flower',
+        price: 399.00,
+        description: 'Adorable handmade white duckling with rosy cheeks holding a blooming pink flower.',
+        images: ['assets/duck_flower_1.jpg', 'assets/duck_flower_2.jpg', 'assets/duck_flower_3.jpg', 'assets/duck_flower_4.jpg', 'assets/duck_flower_5.jpg']
+    },
+    'baby-chick': {
+        id: 'baby-chick',
+        slug: 'baby-chick',
+        name: 'Fluffy Baby Chick Plushie',
         price: 299.00,
-        description: 'A cozy puffy heart keychain to remind you of warm handmade love.',
-        images: ['assets/hearts_1.jpg', 'assets/hearts_2.jpg', 'assets/hearts_3.jpg', 'assets/hearts_4.jpg']
+        description: 'Super soft and round yellow baby chick plushie keychain crafted with cozy chenille velvet yarn.',
+        images: ['assets/baby_chick_1.jpg', 'assets/baby_chick_2.jpg']
     },
-    'combo': {
-        id: 'combo',
-        name: 'Crochet Super Combo Bundle',
-        price: 1199.00,
-        description: 'Special discount bundle featuring a mix of our most popular crochet plushies.',
-        images: ['assets/combo_1.jpg', 'assets/combo_2.jpg', 'assets/combo_3.jpg']
+    'piggy': {
+        id: 'piggy',
+        slug: 'piggy',
+        name: 'Cute Pastel Piggy Moo Keychain',
+        price: 299.00,
+        description: 'Adorable pastel plush keychain with a pink snout, cute ears, and soft spotted patches.',
+        images: ['assets/piggy_1.jpg', 'assets/piggy_2.jpg', 'assets/piggy_3.jpg', 'assets/piggy_4.jpg']
     },
     'bouquet': {
         id: 'bouquet',
-        name: 'Handcrafted Flower Bouquet',
-        price: 999.00,
-        description: 'Gorgeous handmade crochet flower bouquet that never fades.',
-        images: ['assets/bouquet_1.jpg']
+        slug: 'bouquet',
+        name: 'Everlasting Red Rose Bouquet',
+        price: 799.00,
+        description: 'Romantic handmade crochet red rose bouquet wrapped in a cozy cream cone that blooms forever.',
+        images: ['assets/rose_bouquet_1.jpg', 'assets/rose_bouquet_2.jpg', 'assets/rose_bouquet_3.jpg', 'assets/rose_bouquet_4.jpg', 'assets/rose_bouquet_5.jpg']
+    },
+    'rose-flower-pot': {
+        id: 'rose-flower-pot',
+        slug: 'rose-flower-pot',
+        name: 'Mini Crochet Rose Flower Pot',
+        price: 649.00,
+        description: 'Charming white crochet basket pot filled with a lush removable bouquet of handcrafted red roses.',
+        images: ['assets/rose_pot_1.jpg', 'assets/rose_pot_2.jpg', 'assets/rose_pot_3.jpg', 'assets/rose_pot_4.jpg', 'assets/rose_pot_5.jpg']
+    },
+    'flower-mat': {
+        id: 'flower-mat',
+        slug: 'flower-mat',
+        name: 'Blooming Rose Bouquet Coaster Mat',
+        price: 549.00,
+        description: 'Handcrafted cream crochet table mat bordered with 3D red roses that folds into a mini rose bouquet.',
+        images: ['assets/flower_mat_1.jpg', 'assets/flower_mat_2.jpg', 'assets/flower_mat_3.jpg', 'assets/flower_mat_4.jpg']
+    },
+    'sunflower-and-bee': {
+        id: 'sunflower-and-bee',
+        slug: 'sunflower-and-bee',
+        name: 'Sunflower & Bumblebee Keychain Duo',
+        price: 499.00,
+        description: 'Cheerful crochet sunflower paired with a chubby striped bumblebee on pearl beaded keychains.',
+        images: ['assets/sunflower_bee_1.jpg', 'assets/sunflower_bee_2.jpg', 'assets/sunflower_bee_3.jpg', 'assets/sunflower_bee_4.jpg']
+    },
+    'sunflower': {
+        id: 'sunflower',
+        slug: 'sunflower',
+        name: 'Pearl Beaded Sunflower Keychain',
+        price: 299.00,
+        description: 'Bright golden crochet sunflower charm suspended from an iridescent pearl bead keychain strap.',
+        images: ['assets/sunflower_1.jpg', 'assets/sunflower_2.jpg', 'assets/sunflower_3.jpg', 'assets/sunflower_4.jpg']
+    },
+    'pink-purple-tulip': {
+        id: 'pink-purple-tulip',
+        slug: 'pink-purple-tulip',
+        name: 'Pink & Purple Double Tulip Keychain',
+        price: 299.00,
+        description: 'Matching pair of pastel pink and lavender purple crochet tulip flower buds on a leafy green stem.',
+        images: ['assets/pink_purple_tulip_1.jpg', 'assets/flowers_1.jpg', 'assets/flowers_2.jpg']
+    },
+    'white-pink-flower': {
+        id: 'white-pink-flower',
+        slug: 'white-pink-flower',
+        name: 'Pink & White Twin Tulip Keychain',
+        price: 299.00,
+        description: 'Soft blush pink and pure white crochet tulip flower duo hanging from a braided green leaf strap.',
+        images: ['assets/white_pink_flower_1.jpg', 'assets/white_pink_flower_2.jpg', 'assets/white_pink_flower_3.jpg']
+    },
+    'white-tulip': {
+        id: 'white-tulip',
+        slug: 'white-tulip',
+        name: 'Pure White Double Tulip Keychain',
+        price: 299.00,
+        description: 'Elegant twin white crochet bell-tulip flowers with a hand-stitched green leaf loop for bags and keys.',
+        images: ['assets/white_tulip_1.jpg', 'assets/white_tulip_2.jpg', 'assets/white_tulip_3.jpg', 'assets/white_tulip_4.jpg']
+    },
+    'black-bow': {
+        id: 'black-bow',
+        slug: 'black-bow',
+        name: 'Classic Black Ribbon Bow Keychain',
+        price: 249.00,
+        description: 'Chic handcrafted black crochet ribbon bow charm keychain, perfect for bags, backpacks, and keys.',
+        images: ['assets/black_bow_1.jpg', 'assets/black_bow_2.jpg', 'assets/black_bow_3.jpg', 'assets/black_bow_4.jpg', 'assets/black_bow_5.jpg']
+    },
+    'hearts': {
+        id: 'hearts',
+        slug: 'hearts',
+        name: 'Puffy Crochet Heart Keychain',
+        price: 299.00,
+        description: 'A cozy puffy pink heart keychain to remind you of warm handmade love.',
+        images: ['assets/hearts_1.jpg', 'assets/hearts_2.jpg', 'assets/hearts_3.jpg', 'assets/hearts_4.jpg']
+    },
+    'spiderman': {
+        id: 'spiderman',
+        slug: 'spiderman',
+        name: 'Spiderman Crochet Keychain',
+        price: 499.00,
+        description: 'Handcrafted Spiderman hero crochet keychain with detailed mask pattern.',
+        images: ['assets/spiderman_1.jpg', 'assets/spiderman_2.jpg', 'assets/spiderman_3.jpg', 'assets/spiderman_4.jpg']
     }
+};
+
+// Legacy alias lookup map for older cart items or links
+const LEGACY_PRODUCT_ALIASES = {
+    'heart': 'hearts',
+    'tulips': 'pink-purple-tulip',
+    'flowers': 'pink-purple-tulip',
+    'cute': 'duck-holding-flower',
+    'duck': 'duck-holding-flower',
+    'bow': 'black-bow',
+    'combo': 'trio-combo',
+    'teddy': 'white-teddy'
 };
 
 const app = {
     cart: [],
+    productsByUuid: {},
 
     async init() {
         await this.fetchDynamicProducts();
@@ -132,6 +278,12 @@ const app = {
     getProduct(id) {
         if (!id) return null;
         if (PRODUCTS[id]) return PRODUCTS[id];
+        if (LEGACY_PRODUCT_ALIASES[id] && PRODUCTS[LEGACY_PRODUCT_ALIASES[id]]) {
+            return PRODUCTS[LEGACY_PRODUCT_ALIASES[id]];
+        }
+        if (this.productsByUuid && this.productsByUuid[id]) {
+            return this.productsByUuid[id];
+        }
         
         // 1. Try stripping pack/color variant suffixes (e.g. 'slug-single-brown' or 'uuid-single-brown')
         const parts = String(id).split('-');
@@ -141,12 +293,18 @@ const app = {
             if (PRODUCTS[baseKey]) {
                 return PRODUCTS[baseKey];
             }
+            if (LEGACY_PRODUCT_ALIASES[baseKey] && PRODUCTS[LEGACY_PRODUCT_ALIASES[baseKey]]) {
+                return PRODUCTS[LEGACY_PRODUCT_ALIASES[baseKey]];
+            }
+            if (this.productsByUuid && this.productsByUuid[baseKey]) {
+                return this.productsByUuid[baseKey];
+            }
         }
 
-        // 2. Search PRODUCTS by matching id or slug property
+        // 2. Search PRODUCTS by matching id, dbId, or slug property
         for (const k in PRODUCTS) {
             const p = PRODUCTS[k];
-            if (p && (p.id === id || p.slug === id || (typeof id === 'string' && id.startsWith(k)))) {
+            if (p && (p.id === id || p.dbId === id || p.slug === id || (typeof id === 'string' && id.startsWith(k + '-')))) {
                 return p;
             }
         }
@@ -284,27 +442,44 @@ const app = {
     },
 
     async fetchDynamicProducts() {
+        const hiddenVariantPrefix = /^(bears-(single|pair|set3|set4)-|teddy-(single|pair)-)/;
+        const hiddenLegacySlugs = new Set(['duck', 'tulips', 'heart', 'cute', 'bow', 'flowers', 'combo', 'teddy']);
         try {
             const res = await fetch('/api/products');
             const data = await res.json();
-            if (res.ok && data.success) {
+            if (res.ok && data.success && Array.isArray(data.products)) {
                 data.products.forEach(p => {
                     const prod = p.Products || p;
                     const slugKey = prod.slug;
                     const idKey = prod.id;
 
+                    if (slugKey && (hiddenVariantPrefix.test(slugKey) || hiddenLegacySlugs.has(slugKey))) {
+                        return;
+                    }
+
+                    const existing = slugKey ? PRODUCTS[slugKey] : null;
+                    const dbImages = (prod.images && prod.images.length > 0) ? prod.images : null;
+                    // Use curated local images when available unless admin uploaded custom /api/images/
+                    const hasAdminUploadedImg = dbImages && dbImages.some(u => String(u).startsWith('/api/images/'));
+                    const finalImages = (existing && existing.images && !hasAdminUploadedImg)
+                        ? existing.images
+                        : (dbImages || ['/assets/images/placeholder.jpg']);
+
                     const prodObj = {
-                        id: prod.id || prod.slug,
-                        slug: prod.slug,
-                        name: prod.name,
-                        description: prod.description || '',
-                        price: parseFloat(prod.price),
-                        images: (prod.images && prod.images.length > 0) ? prod.images : ['/assets/images/placeholder.jpg'],
-                        hasOptions: !!(prod.colors && prod.colors.length > 0),
-                        fromDB: true   // ← marks this product as admin-managed / DB-sourced
+                        id: slugKey || idKey,
+                        dbId: idKey,
+                        slug: slugKey || idKey,
+                        name: prod.name || (existing ? existing.name : 'Crochet Item'),
+                        description: prod.description || (existing ? existing.description : ''),
+                        price: !isNaN(parseFloat(prod.price)) ? parseFloat(prod.price) : (existing ? existing.price : 0),
+                        images: finalImages,
+                        hasOptions: existing ? existing.hasOptions : !!(prod.colors && prod.colors.length > 0),
+                        packOptions: existing ? existing.packOptions : undefined,
+                        colorOptions: existing ? existing.colorOptions : undefined,
+                        fromDB: true
                     };
 
-                    if (prodObj.hasOptions) {
+                    if (prodObj.hasOptions && (!prodObj.colorOptions || !prodObj.packOptions) && prod.colors && prod.colors.length > 0) {
                         prodObj.colorOptions = prod.colors.map(c => ({
                             label: c.trim(),
                             value: c.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')
@@ -314,8 +489,9 @@ const app = {
                         ];
                     }
 
-                    if (slugKey) PRODUCTS[slugKey] = prodObj;
-                    if (idKey) PRODUCTS[idKey] = prodObj;
+                    const key = slugKey || idKey;
+                    if (key) PRODUCTS[key] = prodObj;
+                    if (idKey) this.productsByUuid[idKey] = prodObj;
                 });
             }
         } catch (err) {
@@ -672,42 +848,121 @@ const app = {
         if (lightbox) lightbox.classList.remove('active');
     },
 
+    switchShowcaseScene(sceneKey, btnEl) {
+        const scenes = {
+            'family': 'scene-family',
+            'cozy-desk': 'scene-cozy-desk',
+            'spiderman-edition': 'scene-spiderman-edition',
+            'trio-companions': 'scene-trio-companions'
+        };
+        Object.values(scenes).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        const targetEl = document.getElementById(scenes[sceneKey]);
+        if (targetEl) targetEl.style.display = 'block';
+
+        document.querySelectorAll('.scene-tab-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        const tooltip = document.getElementById('hotspot-tooltip');
+        if (tooltip) tooltip.classList.remove('active');
+    },
+
+    scrollToProduct(prodId) {
+        const product = this.getProduct(prodId);
+        const targetId = product ? product.id : prodId;
+        const card = document.getElementById(`card-${targetId}`);
+        const tooltip = document.getElementById('hotspot-tooltip');
+        if (tooltip) tooltip.classList.remove('active');
+
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.remove('highlight-target');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('highlight-target');
+            setTimeout(() => card.classList.remove('highlight-target'), 3400);
+        }
+    },
+
     setupHotspots() {
         const spots = document.querySelectorAll('.hotspot');
         const tooltip = document.getElementById('hotspot-tooltip');
         if (!spots.length || !tooltip) return;
-        
-        spots.forEach(spot => {
+
+        const showSpotTooltip = (spot) => {
             const prodId = spot.dataset.product;
             const product = this.getProduct(prodId);
-            
             if (!product) return;
-            
-            spot.addEventListener('mouseenter', (e) => {
-                tooltip.querySelector('h4').textContent = product.name;
-                tooltip.querySelector('p').textContent = `₹${product.price.toFixed(2)}`;
-                tooltip.querySelector('button').setAttribute('onclick', `app.addToCart('${product.id}')`);
-                
-                const rect = spot.getBoundingClientRect();
-                const containerRect = spot.parentElement.getBoundingClientRect();
-                
-                const leftPos = rect.left - containerRect.left + (rect.width / 2) - 90;
-                const topPos = rect.top - containerRect.top - 120;
-                
-                tooltip.style.left = `${leftPos}px`;
-                tooltip.style.top = `${topPos}px`;
-                tooltip.classList.add('active');
+
+            const container = spot.closest('.interactive-scene') || spot.parentElement;
+            if (container && tooltip.parentElement !== container) {
+                container.appendChild(tooltip);
+            }
+
+            const imgEl = document.getElementById('hotspot-tooltip-img');
+            const titleEl = document.getElementById('hotspot-tooltip-title') || tooltip.querySelector('h4');
+            const priceEl = document.getElementById('hotspot-tooltip-price') || tooltip.querySelector('p');
+            const viewBtn = document.getElementById('hotspot-view-btn');
+            const buyBtn = document.getElementById('hotspot-buy-btn') || tooltip.querySelector('button');
+
+            if (imgEl && product.images && product.images.length > 0) {
+                imgEl.src = product.images[0];
+                imgEl.alt = product.name;
+            }
+            if (titleEl) titleEl.textContent = product.name;
+            if (priceEl) priceEl.textContent = `₹${product.price.toFixed(2)}`;
+            if (viewBtn) {
+                viewBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    this.scrollToProduct(product.id);
+                };
+            }
+            if (buyBtn) {
+                buyBtn.onclick = (ev) => {
+                    ev.stopPropagation();
+                    this.addToCart(product.id);
+                };
+            }
+
+            const rect = spot.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const tooltipWidth = 210;
+            let leftPos = rect.left - containerRect.left + (rect.width / 2) - (tooltipWidth / 2);
+            leftPos = Math.max(10, Math.min(leftPos, containerRect.width - tooltipWidth - 10));
+
+            let topPos = rect.top - containerRect.top - 225;
+            if (topPos < 10) {
+                topPos = rect.bottom - containerRect.top + 12;
+            }
+
+            tooltip.style.left = `${leftPos}px`;
+            tooltip.style.top = `${topPos}px`;
+            tooltip.classList.add('active');
+        };
+
+        spots.forEach(spot => {
+            spot.addEventListener('mouseenter', () => showSpotTooltip(spot));
+
+            spot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const prodId = spot.dataset.product;
+                if (window.innerWidth <= 768) {
+                    showSpotTooltip(spot);
+                } else {
+                    this.scrollToProduct(prodId);
+                }
             });
-            
-            spot.addEventListener('mouseleave', (e) => {
+
+            spot.addEventListener('mouseleave', () => {
                 setTimeout(() => {
-                    if (!tooltip.matches(':hover')) {
+                    if (!tooltip.matches(':hover') && !spot.matches(':hover')) {
                         tooltip.classList.remove('active');
                     }
-                }, 100);
+                }, 140);
             });
         });
-        
+
         tooltip.addEventListener('mouseleave', () => {
             tooltip.classList.remove('active');
         });

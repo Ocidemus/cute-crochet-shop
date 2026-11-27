@@ -21,7 +21,7 @@
     <meta name="twitter:description" content="Shop adorable handcrafted crochet plushies, teddy bears, keychains & everlasting flowers.">
     <meta name="twitter:image" content="https://cutecrochet.shop/assets/hero_banner.jpg">
 
-    <link rel="stylesheet" href="css/style.css?v=3.2">
+    <link rel="stylesheet" href="css/style.css?v=5.0">
 
     <!-- Structured Data Schema.org (JSON-LD) -->
     <script type="application/ld+json">
@@ -106,40 +106,92 @@
     </header>
 
     <main>
-        <!-- Hero Banner -->
-        <section class="hero-section">
-            <img src="assets/hero_banner.jpg" alt="Handmade crochet bears, panda, penguin banner" class="hero-banner-img">
-            <div class="hero-overlay">
-                <h1>Handmade with love</h1>
-                <p>Plushies, Keychains & more. Soft, cute & made just for you!</p>
-            </div>
+        <!-- Hero Banner (General Family Banner with Direct Product Hotspots) -->
+        <section class="hero-section interactive-scene" id="hero-interactive-scene">
+            <img src="assets/hero_banner.jpg" alt="Handmade crochet bears, panda, penguin, tulips & heart banner" class="hero-banner-img">
+            <h1 class="sr-only">Handmade with love - Plushies, Keychains & more</h1>
+
+            <!-- Direct Product Hotspots on Hero Banner -->
+            <div class="hotspot" style="top: 39%; left: 39%;" data-product="brown-bear" title="Chocolate Brown Teddy Bear"></div>
+            <div class="hotspot" style="top: 39%; left: 54%;" data-product="white-bear" title="Vanilla White Teddy Bear"></div>
+            <div class="hotspot" style="top: 39%; left: 68%;" data-product="pink-bear" title="Pastel Pink Teddy Bear"></div>
+            <div class="hotspot" style="top: 42%; left: 83%;" data-product="beige-bear" title="Sandy Beige Teddy Bear"></div>
+            <div class="hotspot" style="top: 64%; left: 32%;" data-product="penguin" title="Cozy Mini Penguin Keychain"></div>
+            <div class="hotspot" style="top: 62%; left: 42%;" data-product="panda" title="Chubby Panda Plush Keychain"></div>
+            <div class="hotspot" style="top: 73%; left: 70%;" data-product="pink-purple-tulip" title="Pink & Purple Double Tulip Keychain"></div>
+            <div class="hotspot" style="top: 69%; left: 86%;" data-product="hearts" title="Puffy Crochet Heart Keychain"></div>
         </section>
 
-        <!-- Interactive Photo Section -->
+        <!-- Interactive General Photo Showcase Section -->
         <section style="margin-bottom: 60px; text-align: center;">
             <h2 class="section-title">Meet Our Crochet Family</h2>
-            <p style="color: var(--text-muted); margin-bottom: 30px; font-weight: 500;">
-                Hover or tap the pink buttons on the family photo to discover each character and add them to your basket!
+            <p style="color: var(--text-muted); margin-bottom: 18px; font-weight: 500;">
+                Hover, tap, or click the pulsing pink pins on our collection photos to inspect each creation or jump straight to its product card!
             </p>
+
+            <!-- General Folder Scene Switcher Tabs -->
+            <div class="scene-switcher" role="tablist" aria-label="Crochet Family Photos">
+                <button type="button" class="scene-tab-btn active" onclick="app.switchShowcaseScene('family', this)">🐻 Bear Family Portrait</button>
+                <button type="button" class="scene-tab-btn" onclick="app.switchShowcaseScene('cozy-desk', this)">🌸 Cozy Desk Collection</button>
+                <button type="button" class="scene-tab-btn" onclick="app.switchShowcaseScene('spiderman-edition', this)">🕷️ Bears &amp; Spidey Edition</button>
+                <button type="button" class="scene-tab-btn" onclick="app.switchShowcaseScene('trio-companions', this)">🐧 Cute Companions Trio</button>
+            </div>
             
-            <div class="interactive-image-container">
-                <img src="assets/bears_group.jpg" alt="Group photo of crochet plushies">
-                
-                <!-- Pulsing Hotspots -->
-                <div class="hotspot" id="hotspot-brown-bear" data-product="brown-bear" title="Brown Bear"></div>
-                <div class="hotspot" id="hotspot-white-bear" data-product="white-bear" title="White Bear"></div>
-                <div class="hotspot" id="hotspot-pink-bear" data-product="pink-bear" title="Pink Bear"></div>
-                <div class="hotspot" id="hotspot-beige-bear" data-product="beige-bear" title="Beige Bear"></div>
-                <div class="hotspot" id="hotspot-penguin" data-product="penguin" title="Penguin Keychain"></div>
-                <div class="hotspot" id="hotspot-panda" data-product="panda" title="Panda Keychain"></div>
-                <div class="hotspot" id="hotspot-tulips" data-product="tulips" title="Tulip Keychains"></div>
-                <div class="hotspot" id="hotspot-heart" data-product="heart" title="Heart Keychain"></div>
-                
-                <!-- Floating Card Tooltip -->
-                <div class="hotspot-tooltip" id="hotspot-tooltip">
-                    <h4 style="color: var(--primary-dark); font-weight: 700;">Product Name</h4>
-                    <p style="margin-bottom: 8px; font-weight: 700;">₹0.00</p>
-                    <button class="btn-cute" style="padding: 6px 12px; font-size: 13px;">Add to Basket <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="20" r="1.5" class="icon-filled"/><circle cx="18" cy="20" r="1.5" class="icon-filled"/><path d="M3 3h2l2.5 10a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.5l1.5-7H6.5"/></svg></button>
+            <!-- Scene 1: Family Portrait (bears_group.jpg from general) -->
+            <div class="interactive-image-container interactive-scene" id="scene-family">
+                <img src="assets/bears_group.jpg" alt="Group photo of crochet plushies and keychains">
+                <div class="hotspot" style="top: 53%; left: 24%;" data-product="brown-bear" title="Chocolate Brown Teddy Bear"></div>
+                <div class="hotspot" style="top: 53%; left: 46%;" data-product="white-bear" title="Vanilla White Teddy Bear"></div>
+                <div class="hotspot" style="top: 53%; left: 65%;" data-product="pink-bear" title="Pastel Pink Teddy Bear"></div>
+                <div class="hotspot" style="top: 55%; left: 83%;" data-product="beige-bear" title="Sandy Beige Teddy Bear"></div>
+                <div class="hotspot" style="top: 76%; left: 16%;" data-product="penguin" title="Cozy Mini Penguin Keychain"></div>
+                <div class="hotspot" style="top: 76%; left: 34%;" data-product="panda" title="Chubby Panda Plush Keychain"></div>
+                <div class="hotspot" style="top: 80%; left: 63%;" data-product="pink-purple-tulip" title="Pink & Purple Double Tulip Keychain"></div>
+                <div class="hotspot" style="top: 80%; left: 86%;" data-product="hearts" title="Puffy Crochet Heart Keychain"></div>
+            </div>
+
+            <!-- Scene 2: Cozy Desk Collection (general_purple_banner.jpg from general) -->
+            <div class="interactive-image-container interactive-scene" id="scene-cozy-desk" style="display: none; max-width: 960px;">
+                <img src="assets/general_purple_banner.jpg" alt="Handmade with love crochet desk collection">
+                <div class="hotspot" style="top: 71%; left: 15%;" data-product="penguin" title="Cozy Mini Penguin Keychain"></div>
+                <div class="hotspot" style="top: 91%; left: 21%;" data-product="hearts" title="Puffy Crochet Heart Keychain"></div>
+                <div class="hotspot" style="top: 66%; left: 29%;" data-product="brown-bear" title="Chocolate Brown Teddy Bear"></div>
+                <div class="hotspot" style="top: 67%; left: 43%;" data-product="white-bear" title="Vanilla White Teddy Bear"></div>
+                <div class="hotspot" style="top: 73%; left: 56%;" data-product="panda" title="Chubby Panda Plush Keychain"></div>
+                <div class="hotspot" style="top: 69%; left: 71%;" data-product="pink-bear" title="Pastel Pink Teddy Bear"></div>
+                <div class="hotspot" style="top: 84%; left: 88%;" data-product="pink-purple-tulip" title="Pink & Purple Double Tulip Keychain"></div>
+            </div>
+
+            <!-- Scene 3: Spiderman & Bears Edition (general_spiderman_banner.jpg from general) -->
+            <div class="interactive-image-container interactive-scene" id="scene-spiderman-edition" style="display: none; max-width: 960px;">
+                <img src="assets/general_spiderman_banner.jpg" alt="Handmade crochet bears and Spiderman keychain banner">
+                <div class="hotspot" style="top: 40%; left: 36%;" data-product="brown-bear" title="Chocolate Brown Teddy Bear"></div>
+                <div class="hotspot" style="top: 40%; left: 51%;" data-product="white-bear" title="Vanilla White Teddy Bear"></div>
+                <div class="hotspot" style="top: 40%; left: 64%;" data-product="pink-bear" title="Pastel Pink Teddy Bear"></div>
+                <div class="hotspot" style="top: 43%; left: 80%;" data-product="beige-bear" title="Sandy Beige Teddy Bear"></div>
+                <div class="hotspot" style="top: 73%; left: 29%;" data-product="penguin" title="Cozy Mini Penguin Keychain"></div>
+                <div class="hotspot" style="top: 71%; left: 39%;" data-product="panda" title="Chubby Panda Plush Keychain"></div>
+                <div class="hotspot" style="top: 78%; left: 70%;" data-product="spiderman" title="Spiderman Crochet Keychain"></div>
+                <div class="hotspot" style="top: 76%; left: 83%;" data-product="hearts" title="Puffy Crochet Heart Keychain"></div>
+            </div>
+
+            <!-- Scene 4: Cute Companions Trio (trio_combo_1.jpg) -->
+            <div class="interactive-image-container interactive-scene" id="scene-trio-companions" style="display: none; max-width: 680px;">
+                <img src="assets/trio_combo_1.jpg" alt="Cute little companions trio - White Capybara, Penguin, and Panda">
+                <div class="hotspot" style="top: 48%; left: 23%;" data-product="white-capybara" title="Creamy White Capybara Keychain"></div>
+                <div class="hotspot" style="top: 50%; left: 51%;" data-product="penguin" title="Cozy Mini Penguin Keychain"></div>
+                <div class="hotspot" style="top: 52%; left: 81%;" data-product="panda" title="Chubby Panda Plush Keychain"></div>
+                <div class="hotspot" style="top: 73%; left: 51%;" data-product="trio-combo" title="Cute Companions Trio Combo"></div>
+            </div>
+
+            <!-- Shared Floating Card Tooltip for All Interactive Scenes -->
+            <div class="hotspot-tooltip" id="hotspot-tooltip">
+                <img src="assets/brown_bear_1.jpg" id="hotspot-tooltip-img" class="hotspot-tooltip-img" alt="Product preview">
+                <h4 id="hotspot-tooltip-title" style="color: var(--primary-dark); font-weight: 700;">Product Name</h4>
+                <p id="hotspot-tooltip-price" style="margin-bottom: 8px; font-weight: 700;">₹0.00</p>
+                <div class="hotspot-tooltip-actions">
+                    <button type="button" id="hotspot-view-btn" class="btn-hotspot-view">View Product ↓</button>
+                    <button type="button" id="hotspot-buy-btn" class="btn-cute">Add to Basket</button>
                 </div>
             </div>
         </section>
@@ -199,12 +251,12 @@
             <div class="footer-col">
                 <h3 class="footer-heading">Featured Collections</h3>
                 <ul class="footer-links">
-                    <li><a href="/#card-bears" title="Buy Handmade Crochet Bear Sets">Handcrafted Plush Bears</a></li>
-                    <li><a href="/#card-teddy" title="Buy Ribbon Teddy Bear Plushies">Cozy Ribbon Teddies</a></li>
-                    <li><a href="/#card-panda" title="Buy Panda Velvet Keychains">Panda Plush Keychains</a></li>
-                    <li><a href="/#card-capybara" title="Buy Capybara Handmade Keychains">Capybara Keychains</a></li>
-                    <li><a href="/#card-flowers" title="Buy Everlasting Crochet Flower Stems">Everlasting Crochet Flowers</a></li>
-                    <li><a href="/#card-hearts" title="Buy Puffy Heart Keychains">Puffy Heart Keychains</a></li>
+                    <li><a href="/#card-four-bear-combo" title="Buy 4 Bear Family Combo Set">4 Bear Family Combo</a></li>
+                    <li><a href="/#card-trio-combo" title="Buy Cute Companions Trio Combo">Cute Companions Trio</a></li>
+                    <li><a href="/#card-bouquet" title="Buy Everlasting Red Rose Bouquet">Everlasting Rose Bouquet</a></li>
+                    <li><a href="/#card-rose-flower-pot" title="Buy Mini Crochet Rose Flower Pot">Crochet Rose Flower Pot</a></li>
+                    <li><a href="/#card-flower-mat" title="Buy Blooming Rose Bouquet Coaster Mat">Blooming Rose Coaster Mat</a></li>
+                    <li><a href="/#card-sunflower-and-bee" title="Buy Sunflower & Bumblebee Keychain Duo">Sunflower &amp; Bee Duo</a></li>
                 </ul>
             </div>
 
@@ -231,6 +283,6 @@
 
     <!-- Scripts -->
     <script src="/js/auth.js?v=4.0"></script>
-    <script src="/js/app.js?v=4.5"></script>
+    <script src="/js/app.js?v=5.0"></script>
 </body>
 </html>

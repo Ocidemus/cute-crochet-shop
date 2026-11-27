@@ -142,9 +142,22 @@ func (h *OrdersHandler) CreateOrder(c *gin.Context) {
 			if strings.HasPrefix(item.ProductID, "bears-") {
 				fallbackSlug = "bears"
 			} else if strings.HasPrefix(item.ProductID, "teddy-") {
-				fallbackSlug = "teddy"
+				fallbackSlug = "white-teddy"
+			} else {
+				parts := strings.Split(item.ProductID, "-")
+				for len(parts) > 1 {
+					parts = parts[:len(parts)-1]
+					candidate := strings.Join(parts, "-")
+					if v, e := qtx.GetVariantByProductSlugForUpdate(ctx, candidate); e == nil {
+						variant = v
+						err = nil
+						break
+					}
+				}
 			}
-			variant, err = qtx.GetVariantByProductSlugForUpdate(ctx, fallbackSlug)
+			if err != nil {
+				variant, err = qtx.GetVariantByProductSlugForUpdate(ctx, fallbackSlug)
+			}
 		}
 		if err != nil {
 			log.Printf("[Checkout Error] Variant slug lookup failed for '%s': %v", item.ProductID, err)

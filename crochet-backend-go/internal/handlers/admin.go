@@ -369,6 +369,15 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
+	if h.DB != nil {
+		sku := "ADM-" + strings.ToUpper(uuid.New().String()[:8])
+		_, _ = h.DB.Exec(ctx, `
+			INSERT INTO product_variants (product_id, variant_name, stock_quantity, sku)
+			VALUES ($1, 'Standard', 100, $2)
+			ON CONFLICT (sku) DO NOTHING
+		`, product.ID, sku)
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"product": product,

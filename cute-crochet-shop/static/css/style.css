@@ -322,16 +322,63 @@ p {
 }
 
 /* Hotspots */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.scene-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.scene-tab-btn {
+    background-color: var(--white);
+    color: var(--primary-dark);
+    border: 2px solid var(--primary-light);
+    padding: 8px 18px;
+    border-radius: var(--border-radius-lg);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 10px rgba(226, 123, 138, 0.1);
+}
+
+.scene-tab-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.scene-tab-btn.active {
+    background-color: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-soft);
+}
+
 .hotspot {
     position: absolute;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background-color: var(--primary);
     border: 3px solid var(--white);
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     z-index: 10;
+    transform: translate(-50%, -50%);
     transition: var(--transition);
 }
 
@@ -349,19 +396,9 @@ p {
 }
 
 .hotspot:hover {
-    transform: scale(1.2);
+    transform: translate(-50%, -50%) scale(1.25);
     background-color: var(--secondary);
 }
-
-/* Hotspot coordinates */
-#hotspot-brown-bear { top: 38%; left: 31%; }
-#hotspot-white-bear { top: 38%; left: 52%; }
-#hotspot-pink-bear { top: 38%; left: 66%; }
-#hotspot-beige-bear { top: 40%; left: 81%; }
-#hotspot-penguin { top: 73%; left: 19%; }
-#hotspot-panda { top: 71%; left: 35%; }
-#hotspot-tulips { top: 76%; left: 63%; }
-#hotspot-heart { top: 77%; left: 82%; }
 
 /* Hotspot Tooltip Card */
 .hotspot-tooltip {
@@ -369,15 +406,15 @@ p {
     background: var(--white);
     border: 3px solid var(--primary-light);
     border-radius: var(--border-radius-md);
-    padding: 12px 15px;
-    width: 180px;
+    padding: 12px 14px;
+    width: 210px;
     box-shadow: var(--shadow-bubbly);
-    z-index: 20;
+    z-index: 30;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: var(--transition);
-    transform: translateY(10px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    transform: translateY(8px);
     text-align: center;
 }
 
@@ -388,16 +425,32 @@ p {
     transform: translateY(0);
 }
 
+.hotspot-tooltip-img {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 2px solid var(--primary-light);
+}
+
 .hotspot-tooltip h4 {
-    font-size: 15px;
-    margin-bottom: 4px;
+    font-size: 14px;
+    margin-bottom: 3px;
+    line-height: 1.25;
 }
 
 .hotspot-tooltip p {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--primary-dark);
     font-weight: 700;
     margin-bottom: 8px;
+}
+
+.hotspot-tooltip-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .hotspot-tooltip button {
@@ -405,7 +458,7 @@ p {
     color: var(--white);
     border: none;
     font-size: 12px;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: var(--border-radius-sm);
     cursor: pointer;
     font-family: var(--font-heading);
@@ -415,6 +468,27 @@ p {
 
 .hotspot-tooltip button:hover {
     background-color: var(--primary-dark);
+}
+
+.hotspot-tooltip .btn-hotspot-view {
+    background-color: var(--bg-main);
+    color: var(--primary-dark);
+    border: 1.5px solid var(--primary-light);
+}
+
+.hotspot-tooltip .btn-hotspot-view:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+@keyframes card-target-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(226, 123, 138, 0.7); border-color: var(--primary); transform: scale(1.02); }
+    50% { box-shadow: 0 0 0 14px rgba(226, 123, 138, 0); border-color: var(--secondary); transform: scale(1.03); }
+    100% { box-shadow: var(--shadow-soft); border-color: var(--primary-light); transform: scale(1); }
+}
+
+.product-card.highlight-target {
+    animation: card-target-pulse 1.6s ease 2;
 }
 
 /* Product Catalog Grid */
