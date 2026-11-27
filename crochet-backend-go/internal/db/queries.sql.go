@@ -58,14 +58,15 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 
 const createCustomRequest = `-- name: CreateCustomRequest :one
 
-INSERT INTO custom_requests (name, email, message, image_url)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, email, message, image_url, status, created_at
+INSERT INTO custom_requests (name, email, whatsapp, message, image_url)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, name, email, COALESCE(whatsapp, '') AS whatsapp, message, image_url, status, created_at
 `
 
 type CreateCustomRequestParams struct {
 	Name     string      `json:"name"`
 	Email    string      `json:"email"`
+	Whatsapp string      `json:"whatsapp"`
 	Message  string      `json:"message"`
 	ImageUrl pgtype.Text `json:"image_url"`
 }
@@ -77,6 +78,7 @@ func (q *Queries) CreateCustomRequest(ctx context.Context, arg CreateCustomReque
 	row := q.db.QueryRow(ctx, createCustomRequest,
 		arg.Name,
 		arg.Email,
+		arg.Whatsapp,
 		arg.Message,
 		arg.ImageUrl,
 	)
@@ -85,6 +87,7 @@ func (q *Queries) CreateCustomRequest(ctx context.Context, arg CreateCustomReque
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.Whatsapp,
 		&i.Message,
 		&i.ImageUrl,
 		&i.Status,
@@ -793,7 +796,7 @@ func (q *Queries) ListAddressesByUserID(ctx context.Context, userID pgtype.UUID)
 }
 
 const listCustomRequests = `-- name: ListCustomRequests :many
-SELECT id, name, email, message, image_url, status, created_at FROM custom_requests
+SELECT id, name, email, COALESCE(whatsapp, '') AS whatsapp, message, image_url, status, created_at FROM custom_requests
 ORDER BY created_at DESC
 `
 
@@ -810,6 +813,7 @@ func (q *Queries) ListCustomRequests(ctx context.Context) ([]CustomRequests, err
 			&i.ID,
 			&i.Name,
 			&i.Email,
+			&i.Whatsapp,
 			&i.Message,
 			&i.ImageUrl,
 			&i.Status,

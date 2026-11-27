@@ -21,9 +21,10 @@ type ContactHandler struct {
 }
 
 type ContactRequest struct {
-	Name    string `json:"name" binding:"required"`
-	Email   string `json:"email" binding:"required"`
-	Message string `json:"message" binding:"required"`
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Whatsapp string `json:"whatsapp"`
+	Message  string `json:"message" binding:"required"`
 }
 
 // Validation patterns
@@ -39,6 +40,7 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 	
 	name := strings.TrimSpace(c.PostForm("name"))
 	emailAddr := strings.ToLower(strings.TrimSpace(c.PostForm("email")))
+	whatsapp := strings.TrimSpace(c.PostForm("whatsapp"))
 	message := strings.TrimSpace(c.PostForm("message"))
 
 	if name == "" || emailAddr == "" || message == "" {
@@ -47,12 +49,13 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 		if err := c.ShouldBindJSON(&req); err == nil {
 			name = strings.TrimSpace(req.Name)
 			emailAddr = strings.ToLower(strings.TrimSpace(req.Email))
+			whatsapp = strings.TrimSpace(req.Whatsapp)
 			message = strings.TrimSpace(req.Message)
 		}
 	}
 
-	if name == "" || emailAddr == "" || message == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields (Name, Email, Message) are required."})
+	if name == "" || emailAddr == "" || whatsapp == "" || message == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields (Name, Email, WhatsApp Number, Message) are required."})
 		return
 	}
 
@@ -142,6 +145,7 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 		_, err = h.Queries.CreateCustomRequest(ctx, db.CreateCustomRequestParams{
 			Name:     name,
 			Email:    emailAddr,
+			Whatsapp: whatsapp,
 			Message:  message,
 			ImageUrl: imageUrl,
 		})
@@ -153,7 +157,7 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 
 	// 6. Send email notification
 	emailSvc := email.NewEmailService()
-	go emailSvc.SendContactEmail(name, emailAddr, message)
+	go emailSvc.SendContactEmail(name, emailAddr, fmt.Sprintf("[WhatsApp: %s]\n%s", whatsapp, message))
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

@@ -91,12 +91,25 @@ const adminPortal = {
                            </a>`
                         : `<span style="color: var(--text-muted);">No image</span>`;
                         
+                    const waRaw = (req.whatsapp || '').trim();
+                    let waDigits = waRaw.replace(/\D/g, '');
+                    if (waDigits.length === 10) {
+                        waDigits = '91' + waDigits;
+                    }
+                    const waHtml = waRaw
+                        ? `<div style="margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                               <a href="tel:${this.escapeHTML(waRaw)}" style="font-size: 12px; color: var(--text-main); font-weight: 600; text-decoration: none;">📱 ${this.escapeHTML(waRaw)}</a>
+                               ${waDigits ? `<a href="https://wa.me/${waDigits}?text=${encodeURIComponent('Hi ' + (req.name || '') + '! Regarding your custom crochet request at CuteCrochet Shop:')}" target="_blank" style="background: #E8F8EE; color: #128C7E; border: 1px solid #B7EBC9; border-radius: 12px; padding: 1px 8px; font-size: 11px; font-weight: 700; text-decoration: none;">💬 WhatsApp</a>` : ''}
+                           </div>`
+                        : '';
+
                     return `
                         <tr>
                             <td>${date}</td>
                             <td>
                                 <strong>${this.escapeHTML(req.name)}</strong><br>
                                 <a href="mailto:${this.escapeHTML(req.email)}" style="font-size: 12px; color: var(--primary);">${this.escapeHTML(req.email)}</a>
+                                ${waHtml}
                             </td>
                             <td style="max-width: 300px; white-space: normal;">
                                 ${this.escapeHTML(req.message)}

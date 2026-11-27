@@ -296,6 +296,9 @@ func (nfs NoDirListingFileSystem) Open(name string) (http.File, error) {
 }
 
 func syncCatalogProducts(ctx context.Context, dbPool *pgxpool.Pool) {
+	// Ensure custom_requests table has whatsapp column for customer callbacks
+	_, _ = dbPool.Exec(ctx, `ALTER TABLE custom_requests ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50) DEFAULT '' NOT NULL;`)
+
 	type catalogSeed struct {
 		Slug        string
 		Name        string

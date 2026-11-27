@@ -169,12 +169,12 @@ WHERE id = $1;
 -- ============================================================================
 
 -- name: CreateCustomRequest :one
-INSERT INTO custom_requests (name, email, message, image_url)
-VALUES ($1, $2, $3, $4)
-RETURNING *;
+INSERT INTO custom_requests (name, email, whatsapp, message, image_url)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, name, email, COALESCE(whatsapp, '') AS whatsapp, message, image_url, status, created_at;
 
 -- name: ListCustomRequests :many
-SELECT * FROM custom_requests
+SELECT id, name, email, COALESCE(whatsapp, '') AS whatsapp, message, image_url, status, created_at FROM custom_requests
 ORDER BY created_at DESC;
 
 -- name: SaveImage :one

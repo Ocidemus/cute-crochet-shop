@@ -24,6 +24,7 @@ type CustomRequests struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`
 	Email     string             `json:"email"`
+	Whatsapp  string             `json:"whatsapp"`
 	Message   string             `json:"message"`
 	ImageUrl  pgtype.Text        `json:"image_url"`
 	Status    string             `json:"status"`

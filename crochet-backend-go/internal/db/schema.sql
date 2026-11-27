@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS custom_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    whatsapp VARCHAR(50) DEFAULT '' NOT NULL,
     message TEXT NOT NULL,
     image_url TEXT,
     status VARCHAR(50) DEFAULT 'pending' NOT NULL,

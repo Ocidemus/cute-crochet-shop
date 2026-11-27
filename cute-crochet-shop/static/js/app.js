@@ -1065,12 +1065,14 @@ const app = {
         const form = e.target;
         const name = form.name.value.trim();
         const email = form.email.value.trim().toLowerCase();
+        const whatsapp = (form.whatsapp ? form.whatsapp.value : '').trim();
         const message = form.message.value.trim();
         
         const errorEl = document.getElementById('contact-error');
         const successEl = document.getElementById('contact-success');
         const msgTextarea = document.getElementById('contact-message');
         const emailInput = document.getElementById('contact-email');
+        const whatsappInput = document.getElementById('contact-whatsapp');
         
         if (errorEl) errorEl.style.display = 'none';
         if (successEl) successEl.style.display = 'none';
@@ -1081,6 +1083,10 @@ const app = {
         if (emailInput) {
             emailInput.style.border = '';
             emailInput.style.backgroundColor = '';
+        }
+        if (whatsappInput) {
+            whatsappInput.style.border = '';
+            whatsappInput.style.backgroundColor = '';
         }
 
         // Email format & disposable domain validation
@@ -1100,6 +1106,25 @@ const app = {
             if (emailInput) {
                 emailInput.style.border = '2px solid #FF8DA1';
                 emailInput.style.backgroundColor = '#FFF5F7';
+            }
+            return;
+        }
+
+        // WhatsApp number validation (at least 10 digits)
+        const digitsOnly = whatsapp.replace(/\D/g, '');
+        if (!/^[+]?[0-9\s\-()]{10,18}$/.test(whatsapp) || digitsOnly.length < 10 || digitsOnly.length > 15) {
+            if (errorEl) {
+                errorEl.innerHTML = `
+                    <div style="background: #FFF0F2; border: 2px solid #FF8DA1; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px;">
+                        <svg class="icon-inline" style="width: 20px; height: 20px; stroke: #D32F2F; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style="color: #5A3A40; font-size: 13px; font-weight: 600;">Please enter a valid 10-digit WhatsApp number so we can contact you about your custom design.</span>
+                    </div>
+                `;
+                errorEl.style.display = 'block';
+            }
+            if (whatsappInput) {
+                whatsappInput.style.border = '2px solid #FF8DA1';
+                whatsappInput.style.backgroundColor = '#FFF5F7';
             }
             return;
         }
@@ -1128,6 +1153,7 @@ const app = {
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
+            formData.append('whatsapp', whatsapp);
             formData.append('message', message);
             
             const imageFile = document.getElementById('contact-image')?.files[0];
@@ -1178,10 +1204,12 @@ const app = {
         const currentUser = (window.auth && typeof window.auth.getUser === 'function') ? window.auth.getUser() : null;
         const nameInput = document.getElementById('contact-name');
         const emailInput = document.getElementById('contact-email');
+        const whatsappInput = document.getElementById('contact-whatsapp');
         const emailStatus = document.getElementById('contact-email-status');
 
         if (currentUser && currentUser.email) {
             if (nameInput && currentUser.name) nameInput.value = currentUser.name;
+            if (whatsappInput && currentUser.phone) whatsappInput.value = currentUser.phone;
             if (emailInput) {
                 emailInput.value = currentUser.email;
                 emailInput.readOnly = true;
