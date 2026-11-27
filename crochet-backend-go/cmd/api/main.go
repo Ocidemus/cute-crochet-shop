@@ -136,6 +136,11 @@ func main() {
 	// 5. Mount API Routes
 	api := r.Group("/api")
 	{
+		// Health Check Endpoint (used by UptimeRobot / Cron-Job.org / Keep-Alive to prevent Render free-tier sleep)
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"status": "awake", "timestamp": time.Now().UTC()})
+		})
+
 		// Contact Form Endpoint
 		api.POST("/contact", contactHandler.SubmitContact)
 
@@ -262,6 +267,26 @@ func main() {
 
 		c.Data(http.StatusNotFound, "text/html; charset=utf-8", htmlBytes)
 	})
+
+	// Start background keep-alive ticker to keep Render instance and DB connection warm
+	go func() {
+		targetURL := strings.TrimRight(os.Getenv("RENDER_EXTERNAL_URL"), "/")
+		if targetURL == "" {
+			targetURL = strings.TrimRight(os.Getenv("FRONTEND_URL"), "/")
+		}
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		client := &http.Client{Timeout: 10 * time.Second}
+		for range ticker.C {
+			_ = dbPool.Ping(context.Background())
+			if targetURL != "" && strings.HasPrefix(targetURL, "http") {
+				resp, err := client.Get(targetURL + "/api/health")
+				if err == nil && resp != nil {
+					resp.Body.Close()
+				}
+			}
+		}
+	}()
 
 	// Start Gin Server
 	log.Printf("Go Crochet Backend running on port %s...", port)
