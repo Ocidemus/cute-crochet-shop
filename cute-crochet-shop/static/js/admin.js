@@ -219,15 +219,16 @@ const adminPortal = {
             (o.items || []).forEach(it => {
                 itemsHtml += `
                     <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-                        <span><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px; color:var(--primary); margin-right:4px;"><circle cx="12" cy="12" r="6"/></svg> <strong>${it.product_name || 'Crochet Item'}</strong> (x${it.quantity})</span>
-                        <span style="color: var(--primary-dark); font-weight: 600;">₹${((it.price || 0) * (it.quantity || 1)).toFixed(2)}</span>
+                        <span><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px; height:10px; color:var(--primary); margin-right:4px;"><circle cx="12" cy="12" r="6"/></svg> <strong>${this.escapeHTML(it.product_name || 'Crochet Item')}</strong> (x${Number(it.quantity) || 1})</span>
+                        <span style="color: var(--primary-dark); font-weight: 600;">₹${((Number(it.price) || 0) * (Number(it.quantity) || 1)).toFixed(2)}</span>
                     </div>
                 `;
             });
 
             // Address string
             const addr = o.address || {};
-            const addrStr = addr.line1 ? `${addr.line1}, ${addr.line2 ? addr.line2 + ', ' : ''}${addr.city}, ${addr.state} - ${addr.pincode}` : 'No address provided';
+            const rawAddrStr = addr.line1 ? `${addr.line1}, ${addr.line2 ? addr.line2 + ', ' : ''}${addr.city}, ${addr.state} - ${addr.pincode}` : 'No address provided';
+            const addrStr = this.escapeHTML(rawAddrStr);
 
             // Shipment section
             let shipSection = '';
@@ -236,14 +237,14 @@ const adminPortal = {
                     <div style="background: #EBFDF8; border: 1px solid #C4F7E6; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 13px; color: #1E6652;">
                             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px; margin-right:4px;"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                            <strong>${o.shipment.courier_name}:</strong> #${o.shipment.tracking_number}
+                            <strong>${this.escapeHTML(o.shipment.courier_name)}:</strong> #${this.escapeHTML(o.shipment.tracking_number)}
                         </span>
                         <span class="ship-badge">SHIPPED</span>
                     </div>
                 `;
             } else if (isPaid) {
                 shipSection = `
-                    <button class="btn-cute" style="font-size: 12px; padding: 6px 14px;" onclick="adminPortal.openShipmentModal('${o.id}')">
+                    <button class="btn-cute" style="font-size: 12px; padding: 6px 14px;" onclick="adminPortal.openShipmentModal('${this.escapeHTML(o.id)}')">
                         + Attach Shiprocket Courier Tracking 
                         <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:14px; height:14px; margin-left:4px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                     </button>
@@ -260,21 +261,21 @@ const adminPortal = {
                 <div class="admin-order-card">
                     <div class="admin-order-header">
                         <div>
-                            <span style="font-weight: 700; color: var(--primary-dark);">Order #${o.id.substring(0, 8)}...</span>
-                            <span style="font-size: 12px; color: var(--text-muted); margin-left: 10px;">${dateStr}</span>
+                            <span style="font-weight: 700; color: var(--primary-dark);">Order #${this.escapeHTML((o.id || '').substring(0, 8))}...</span>
+                            <span style="font-size: 12px; color: var(--text-muted); margin-left: 10px;">${this.escapeHTML(dateStr)}</span>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             ${statusBadgeHtml}
-                            <span style="font-weight: 800; font-size: 16px; color: var(--primary-dark);">₹${(o.total_amount || 0).toFixed(2)}</span>
+                            <span style="font-weight: 800; font-size: 16px; color: var(--primary-dark);">₹${(Number(o.total_amount) || 0).toFixed(2)}</span>
                         </div>
                     </div>
                     <div class="admin-order-body">
                         <div class="admin-order-grid">
                             <div>
                                 <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">CUSTOMER DETAILS</div>
-                                <div style="font-weight: 700; color: var(--text-main); font-size: 14px; margin-top: 4px;">${o.user_name || 'Guest'}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">${o.user_email}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">${o.user_phone || 'No phone'}</div>
+                                <div style="font-weight: 700; color: var(--text-main); font-size: 14px; margin-top: 4px;">${this.escapeHTML(o.user_name || 'Guest')}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${this.escapeHTML(o.user_email)}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${this.escapeHTML(o.user_phone || 'No phone')}</div>
                             </div>
                             <div>
                                 <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">SHIPPING DESTINATION</div>
@@ -282,7 +283,7 @@ const adminPortal = {
                             </div>
                             <div>
                                 <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">RAZORPAY ORDER ID</div>
-                                <div style="font-family: monospace; font-size: 12px; margin-top: 4px; color: var(--primary-dark);">${o.razorpay_order_id || 'N/A'}</div>
+                                <div style="font-family: monospace; font-size: 12px; margin-top: 4px; color: var(--primary-dark);">${this.escapeHTML(o.razorpay_order_id || 'N/A')}</div>
                             </div>
                         </div>
 
@@ -367,14 +368,14 @@ const adminPortal = {
         container.innerHTML = this.products.map(p => `
             <div class="cute-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" alt="${p.name}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;">` : ''}
-                    <h4 style="margin: 0; color: var(--primary-dark);">${p.name}</h4>
+                    ${p.images && p.images.length > 0 ? `<img src="${this.escapeHTML(p.images[0])}" alt="${this.escapeHTML(p.name)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;">` : ''}
+                    <h4 style="margin: 0; color: var(--primary-dark);">${this.escapeHTML(p.name)}</h4>
                     <p style="font-size: 13px; color: var(--text-muted); margin: 5px 0;">₹${parseFloat(p.price).toFixed(2)}</p>
-                    <p style="font-size: 12px; color: #666; margin: 10px 0;">${p.description}</p>
+                    <p style="font-size: 12px; color: #666; margin: 10px 0;">${this.escapeHTML(p.description)}</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button class="btn-cute" style="flex: 1; padding: 8px;" onclick="adminPortal.openEditProductModal('${p.id}')">Edit</button>
-                    <button class="btn-cute" style="background: #FFF0F2; color: #D84A67; border-color: #FFD6E0; flex: 1; padding: 8px;" onclick="adminPortal.deleteProduct('${p.id}')">Remove</button>
+                    <button class="btn-cute" style="flex: 1; padding: 8px;" onclick="adminPortal.openEditProductModal('${this.escapeHTML(p.id)}')">Edit</button>
+                    <button class="btn-cute" style="background: #FFF0F2; color: #D84A67; border-color: #FFD6E0; flex: 1; padding: 8px;" onclick="adminPortal.deleteProduct('${this.escapeHTML(p.id)}')">Remove</button>
                 </div>
             </div>
         `).join('');

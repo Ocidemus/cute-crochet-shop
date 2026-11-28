@@ -6,10 +6,16 @@ crochet-backend-go/.env.*.local
 # Compiled binaries and temporary builds
 crochet-backend-go/bin/
 crochet-backend-go/tmp/
+crochet-backend-go/api
+crochet-backend-go/server
+crochet-backend-go/tmp_api
+crochet-backend-go/*.exe
 crochet-backend-go/crochet-check
 crochet-backend-go/check_products
 crochet-backend-go/view_orders
 crochet-backend-go/scratch/
+cute-crochet-shop/__pycache__/
+cute-crochet-shop/*.db
 
 # OS generated files
 .DS_Store

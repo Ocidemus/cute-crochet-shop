@@ -116,13 +116,15 @@ func (h *ContactHandler) SubmitContact(c *gin.Context) {
 			return
 		}
 
-		contentType := file.Header.Get("Content-Type")
-		if contentType == "" {
-			contentType = "application/octet-stream"
+		// Detect actual MIME type from binary magic bytes rather than trusting client Content-Type header
+		detectedType := http.DetectContentType(data)
+		if detectedType != "image/jpeg" && detectedType != "image/png" && detectedType != "image/webp" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Uploaded file is not a valid JPG, PNG, or WebP image."})
+			return
 		}
 		
 		id, err := h.Queries.SaveImage(c.Request.Context(), db.SaveImageParams{
-			ContentType: contentType,
+			ContentType: detectedType,
 			ImageData:   data,
 		})
 		

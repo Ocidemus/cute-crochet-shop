@@ -79,27 +79,51 @@ func main() {
 	contactHandler := &handlers.ContactHandler{Queries: *queries, DB: dbPool}
 
 	// 4. Initialize Gin Framework
-	if os.Getenv("NODE_ENV") == "production" {
+	isProd := os.Getenv("NODE_ENV") == "production"
+	if isProd {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.Default()
 
-	// CORS Setup
-	r.Use(func(c *gin.Context) {
-		allowedOrigin := os.Getenv("FRONTEND_URL")
-		origin := c.Request.Header.Get("Origin")
+	// Security Headers & Restricted CORS Allowlist Middleware
+	allowedOrigins := map[string]bool{
+		"https://craftingforyou.in":     true,
+		"https://www.craftingforyou.in": true,
+		"https://cutecrochet.shop":      true,
+		"https://www.cutecrochet.shop":  true,
+	}
+	if fe := strings.TrimRight(strings.TrimSpace(os.Getenv("FRONTEND_URL")), "/"); fe != "" {
+		allowedOrigins[fe] = true
+	}
+	if re := strings.TrimRight(strings.TrimSpace(os.Getenv("RENDER_EXTERNAL_URL")), "/"); re != "" {
+		allowedOrigins[re] = true
+	}
+	if !isProd {
+		allowedOrigins["http://localhost:3000"] = true
+		allowedOrigins["http://localhost:8080"] = true
+		allowedOrigins["http://127.0.0.1:3000"] = true
+		allowedOrigins["http://127.0.0.1:8080"] = true
+	}
 
-		if origin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-		} else if allowedOrigin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-		} else {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	r.Use(func(c *gin.Context) {
+		// Standard Defense-in-Depth HTTP Security Headers
+		c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+		c.Writer.Header().Set("X-Frame-Options", "DENY")
+		c.Writer.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Writer.Header().Set("X-XSS-Protection", "1; mode=block")
+		c.Writer.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		if isProd {
+			c.Writer.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}
 
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Admin-Key")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		origin := strings.TrimRight(strings.TrimSpace(c.Request.Header.Get("Origin")), "/")
+		if origin != "" && allowedOrigins[origin] {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Admin-Key")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		}
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
@@ -131,6 +155,8 @@ func main() {
 
 	// Rate Limit configuration definitions
 	loginLimit := middleware.RateLimit(15*time.Minute, 10, "Too many login attempts. Please try again after 15 minutes.")
+	registerLimit := middleware.RateLimit(15*time.Minute, 10, "Too many registration attempts. Please try again after 15 minutes.")
+	contactLimit := middleware.RateLimit(15*time.Minute, 5, "Too many custom design / contact submissions. Please try again after 15 minutes.")
 	orderLimit := middleware.RateLimit(5*time.Minute, 5, "Too many order attempts. Please try again in 5 minutes.")
 
 	// 5. Mount API Routes
@@ -142,23 +168,23 @@ func main() {
 		})
 
 		// Contact Form Endpoint
-		api.POST("/contact", contactHandler.SubmitContact)
+		api.POST("/contact", contactLimit, contactHandler.SubmitContact)
 
 		// Auth Endpoints
 		auth := api.Group("/auth")
 		{
 			auth.GET("/config", authHandler.GetAuthConfig)
-			auth.POST("/send-otp", authHandler.SendOTP)
-			auth.POST("/register", authHandler.Register)
+			auth.POST("/send-otp", registerLimit, authHandler.SendOTP)
+			auth.POST("/register", registerLimit, authHandler.Register)
 			auth.POST("/login", loginLimit, authHandler.Login)
-			auth.POST("/google", authHandler.GoogleAuth)
+			auth.POST("/google", loginLimit, authHandler.GoogleAuth)
 		}
 		
 		// Legacy auth aliases for frontend compatibility
-		api.POST("/send-otp", authHandler.SendOTP)
-		api.POST("/register", authHandler.Register)
+		api.POST("/send-otp", registerLimit, authHandler.SendOTP)
+		api.POST("/register", registerLimit, authHandler.Register)
 		api.POST("/login", loginLimit, authHandler.Login)
-		api.POST("/google", authHandler.GoogleAuth)
+		api.POST("/google", loginLimit, authHandler.GoogleAuth)
 
 		// User Profile Endpoints
 		userGroup := api.Group("/user")

@@ -272,6 +272,11 @@ func (h *AdminHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
+	if file.Size > 5*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Image file too large. Max size is 5MB."})
+		return
+	}
+
 	f, err := file.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open image."})
@@ -285,13 +290,15 @@ func (h *AdminHandler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	contentType := file.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = "application/octet-stream"
+	// Sniff actual file magic bytes instead of trusting client Content-Type header
+	detectedType := http.DetectContentType(data)
+	if detectedType != "image/jpeg" && detectedType != "image/png" && detectedType != "image/webp" && detectedType != "image/gif" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image content. Only JPG, PNG, WebP, and GIF images are allowed."})
+		return
 	}
 	
 	id, err := h.Queries.SaveImage(context.Background(), db.SaveImageParams{
-		ContentType: contentType,
+		ContentType: detectedType,
 		ImageData:   data,
 	})
 	
@@ -306,7 +313,7 @@ func (h *AdminHandler) UploadImage(c *gin.Context) {
 	})
 }
 
-// GET /api/images/:id - Serves an image from the database
+// GET /api/images/:id - Serves an image from the database with sandboxed security headers
 func (h *AdminHandler) ServeImage(c *gin.Context) {
 	idStr := c.Param("id")
 	parsedID, err := uuid.Parse(idStr)
@@ -325,7 +332,17 @@ func (h *AdminHandler) ServeImage(c *gin.Context) {
 		return
 	}
 
-	c.Data(http.StatusOK, img.ContentType, img.ImageData)
+	// Always sniff actual bytes and enforce strict image Content-Type + sandbox CSP to prevent Stored XSS
+	safeType := http.DetectContentType(img.ImageData)
+	if safeType != "image/jpeg" && safeType != "image/png" && safeType != "image/webp" && safeType != "image/gif" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Stored file is not a valid image."})
+		return
+	}
+
+	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+	c.Writer.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
+	c.Writer.Header().Set("Cache-Control", "public, max-age=86400")
+	c.Data(http.StatusOK, safeType, img.ImageData)
 }
 
 type CreateProductRequest struct {

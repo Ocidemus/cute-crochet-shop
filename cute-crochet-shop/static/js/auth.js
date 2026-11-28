@@ -3,6 +3,16 @@
 const API_BASE = window.location.origin;
 
 const auth = {
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     getToken() {
         return localStorage.getItem('crochet_auth_token');
     },
@@ -186,7 +196,7 @@ const auth = {
         
         if (isAuthenticated && user) {
             // Logged in user profile & logout
-            let displayName = user.name || user.username || 'User';
+            let displayName = this.escapeHTML(user.name || user.username || 'User');
             const profileLi = document.createElement('li');
             profileLi.className = 'dynamic-auth user-profile';
             profileLi.innerHTML = `

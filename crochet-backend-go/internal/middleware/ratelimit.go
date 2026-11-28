@@ -41,6 +41,27 @@ func (rl *rateLimiter) Allow(ip string) bool {
 		}
 	}
 
+	if len(active) == 0 {
+		delete(rl.requests, ip)
+	}
+
+	// Periodically sweep stale IP keys if map grows large to prevent memory exhaustion
+	if len(rl.requests) > 2000 {
+		for k, times := range rl.requests {
+			var kept []time.Time
+			for _, t := range times {
+				if t.After(cutoff) {
+					kept = append(kept, t)
+				}
+			}
+			if len(kept) == 0 {
+				delete(rl.requests, k)
+			} else {
+				rl.requests[k] = kept
+			}
+		}
+	}
+
 	if len(active) >= rl.limit {
 		rl.requests[ip] = active
 		return false

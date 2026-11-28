@@ -214,9 +214,44 @@
             }
         }
 
-        // Get redirect path
+        // Sanitize redirect path to prevent Open Redirect and javascript: DOM XSS
+        function getSafeRedirect(raw) {
+            if (!raw || typeof raw !== 'string') return '/';
+            const clean = raw.trim();
+            const knownRoutes = {
+                'index.html': '/',
+                'index': '/',
+                '/': '/',
+                'checkout': '/checkout',
+                '/checkout': '/checkout',
+                'cart': '/cart',
+                '/cart': '/cart',
+                'profile': '/profile',
+                '/profile': '/profile',
+                'orders': '/orders',
+                '/orders': '/orders',
+                'admin': '/dashboard',
+                '/admin': '/dashboard',
+                'dashboard': '/dashboard',
+                '/dashboard': '/dashboard',
+                'portal': '/dashboard',
+                '/portal': '/dashboard',
+                'contact': '/contact',
+                '/contact': '/contact',
+                'about': '/about',
+                '/about': '/about'
+            };
+            if (knownRoutes[clean.toLowerCase()]) {
+                return knownRoutes[clean.toLowerCase()];
+            }
+            if (clean.startsWith('/') && !clean.startsWith('//') && !clean.startsWith('/\\') && /^\/[a-zA-Z0-9_\-\/]*$/.test(clean)) {
+                return clean;
+            }
+            return '/';
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect') || 'index.html';
+        const redirect = getSafeRedirect(urlParams.get('redirect'));
 
         // Login Submit
         document.getElementById('form-login').addEventListener('submit', async (e) => {

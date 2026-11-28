@@ -22,7 +22,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/api cmd/api/m
 # Stage 2: Minimal production runner image
 FROM alpine:3.18 AS runner
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && \
+    adduser -D -u 10001 appuser
 
 WORKDIR /app
 
@@ -31,6 +32,10 @@ COPY --from=builder /app/bin/api /app/api
 
 # Copy frontend static files from cute-crochet-shop/static
 COPY cute-crochet-shop/static /app/static
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 # Set production environment variables
 ENV PORT=3000

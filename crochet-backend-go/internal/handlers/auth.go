@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -26,8 +28,9 @@ import (
 var validate = validator.New()
 
 type OTPItem struct {
-	Hash      []byte
-	ExpiresAt time.Time
+	Hash           []byte
+	ExpiresAt      time.Time
+	FailedAttempts int
 }
 
 type RateLimitItem struct {
@@ -113,8 +116,13 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		otpRateLimitStore.Store(cleanEmail, RateLimitItem{Attempts: 1, ResetTime: time.Now().Add(15 * time.Minute)})
 	}
 
-	// Generate 6-digit code and hash it
-	code := fmt.Sprintf("%06d", rand.Intn(1000000))
+	// Generate cryptographically secure 6-digit code and hash it
+	nBig, randErr := rand.Int(rand.Reader, big.NewInt(1000000))
+	if randErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure OTP."})
+		return
+	}
+	code := fmt.Sprintf("%06d", nBig.Int64())
 	hashedCode, hashErr := bcrypt.GenerateFromPassword([]byte(code), 10)
 	if hashErr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure OTP."})
@@ -122,8 +130,9 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 	}
 
 	otpStore.Store(cleanEmail, OTPItem{
-		Hash:      hashedCode,
-		ExpiresAt: time.Now().Add(10 * time.Minute),
+		Hash:           hashedCode,
+		ExpiresAt:      time.Now().Add(10 * time.Minute),
+		FailedAttempts: 0,
 	})
 
 	// Dispatch email
@@ -187,6 +196,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := bcrypt.CompareHashAndPassword(item.Hash, []byte(req.OTPCode)); err != nil {
+		item.FailedAttempts++
+		if item.FailedAttempts >= 5 {
+			otpStore.Delete(cleanEmail)
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many failed OTP attempts. This code has been invalidated—please click 'Resend Code' for a new OTP."})
+			return
+		}
+		otpStore.Store(cleanEmail, item)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid verification code. Please check your email inbox or spam folder."})
 		return
 	}
@@ -302,6 +318,7 @@ type GoogleAuthRequest struct {
 }
 
 type GoogleTokenInfo struct {
+	Aud           string `json:"aud"`
 	Sub           string `json:"sub"`
 	Email         string `json:"email"`
 	EmailVerified string `json:"email_verified"`
@@ -317,10 +334,20 @@ func (h *AuthHandler) GoogleAuth(c *gin.Context) {
 		return
 	}
 
+	expectedClientID := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
+	if expectedClientID == "" {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Google Sign-In is not configured on this server."})
+		return
+	}
+
 	// Verify ID Token with Google's tokeninfo OAuth2 verification service
-	googleInfoURL := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", req.Credential)
-	resp, err := http.Get(googleInfoURL)
+	googleInfoURL := fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", url.QueryEscape(req.Credential))
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	resp, err := httpClient.Get(googleInfoURL)
 	if err != nil || resp.StatusCode != http.StatusOK {
+		if resp != nil {
+			resp.Body.Close()
+		}
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to verify Google token credential with Google authentication servers."})
 		return
 	}
@@ -329,6 +356,16 @@ func (h *AuthHandler) GoogleAuth(c *gin.Context) {
 	var tokenInfo GoogleTokenInfo
 	if err := json.NewDecoder(resp.Body).Decode(&tokenInfo); err != nil || tokenInfo.Email == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google user identity payload."})
+		return
+	}
+
+	// Strictly enforce Audience (aud) match against our GOOGLE_CLIENT_ID and verified email
+	if tokenInfo.Aud != expectedClientID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Google token audience mismatch. Token was not issued for this application."})
+		return
+	}
+	if strings.ToLower(tokenInfo.EmailVerified) != "true" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Your Google account email address is not verified."})
 		return
 	}
 
